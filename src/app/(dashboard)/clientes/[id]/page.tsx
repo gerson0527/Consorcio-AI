@@ -25,6 +25,7 @@ import { filtroClienteAccesible } from "@/lib/acceso-clientes";
 import { puede } from "@/lib/autorizacion";
 import { documentoEnmascarado } from "@/lib/campos";
 import { formatoCop } from "@/lib/formato";
+import { redisDisponible } from "@/jobs/cola";
 import { prisma } from "@/lib/prisma";
 import { sesionActual } from "@/lib/sesion";
 import type { Perfil } from "@/modules/ingesta/perfil";
@@ -137,7 +138,15 @@ export default async function CasoCliente({
           Este caso ya tiene un resultado registrado y no se puede editar.
         </p>
       ) : null}
-      {avisos.error && avisos.error !== "cerrado" ? (
+      {avisos.error === "procesamiento_pausado" ? (
+        <p className="text-sm text-destructive" role="alert">
+          La carga de documentos está pausada mientras se configura Redis. No se guardó
+          ningún archivo.
+        </p>
+      ) : null}
+      {avisos.error &&
+      avisos.error !== "cerrado" &&
+      avisos.error !== "procesamiento_pausado" ? (
         <p className="text-sm text-destructive" role="alert">
           No se pudo completar la acción. Revisa el archivo o los datos.
         </p>
@@ -261,7 +270,7 @@ export default async function CasoCliente({
                 Todavía no hay documentos.
               </p>
             )}
-            {caso && !soloLectura ? (
+            {caso && !soloLectura && redisDisponible() ? (
               <form
                 action={subirDocumento}
                 className="mt-4 flex flex-col gap-3 border-t pt-4"
@@ -290,6 +299,14 @@ export default async function CasoCliente({
                   {documentos.length ? "Subir otro documento" : "Subir documento"}
                 </Button>
               </form>
+            ) : caso && !soloLectura ? (
+              <p
+                className="mt-4 border-t pt-4 text-sm text-muted-foreground"
+                role="status"
+              >
+                La carga y extracción de documentos estará disponible cuando se configure
+                Redis.
+              </p>
             ) : null}
           </article>
         </section>

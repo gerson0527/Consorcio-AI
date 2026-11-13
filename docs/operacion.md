@@ -13,6 +13,8 @@ Esto no es asesoría legal. Consorcio Finance debe validar con su asesor, entre 
 
 En local, si `S3_ENDPOINT` apunta a localhost, los archivos se guardan en `.data/archivos` y el enlace firmado dura cinco minutos. Dentro de Compose, el servicio `app` apunta `S3_ENDPOINT` a MinIO.
 
+`REDIS_URL` puede omitirse temporalmente para que la aplicación web arranque sin las colas. En ese caso no se pueden cargar documentos ni ejecutar extracción; configura Redis y vuelve a desplegar para reactivar ese flujo.
+
 ## Variables
 
 Están en `.env.example`. Los modelos vigentes al 2026-11-12 son `claude-haiku-5-5` para extracción y `claude-sonnet-5-5` para el análisis. El SDK actual no expone temperatura; las llamadas usan `effort: low` y un JSON schema.

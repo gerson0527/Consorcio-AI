@@ -17,7 +17,7 @@ import { recalibrarEntidad, detectarPatrones } from "@/modules/aprendizaje";
 import { registrarAuditoria } from "@/modules/auditoria";
 import { evaluarCaso } from "@/modules/evaluacion";
 import { claveAleatoria, validarArchivo } from "@/modules/ingesta";
-import { encolarExtraccion } from "@/jobs/cola";
+import { encolarExtraccion, redisDisponible } from "@/jobs/cola";
 
 const esquemaCliente = z.object({
   nombre: z.string().trim().min(3).max(120),
@@ -124,6 +124,9 @@ export async function subirDocumento(formData: FormData) {
     redirect("/clientes?error=limite");
   }
   const casoId = z.string().parse(formData.get("casoId"));
+  if (!redisDisponible()) {
+    redirect(`/clientes/${casoId}?error=procesamiento_pausado`);
+  }
   const tipo = z
     .enum(["cedula", "desprendible", "certificado_laboral", "extracto", "otro"])
     .parse(formData.get("tipo"));

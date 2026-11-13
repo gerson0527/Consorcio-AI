@@ -54,4 +54,8 @@ describe("analizarEntorno", () => {
       /AUTH_SECRET/,
     );
   });
+
+  it("permite iniciar sin Redis mientras las colas estén desactivadas", () => {
+    expect(analizarEntorno(entornoValido({ REDIS_URL: "" })).REDIS_URL).toBeUndefined();
+  });
 });

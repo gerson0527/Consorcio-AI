@@ -4,8 +4,15 @@ import IORedis from "ioredis";
 import { detectarPatrones } from "@/modules/aprendizaje/servicio";
 import { procesarDocumento } from "@/modules/ingesta/procesar";
 
+export function redisDisponible() {
+  return Boolean(process.env.REDIS_URL?.trim());
+}
+
 function conexion() {
-  const url = process.env.REDIS_URL ?? "redis://localhost:6379";
+  const url = process.env.REDIS_URL?.trim();
+  if (!url) {
+    throw new Error("Redis no está configurado; el procesamiento en cola está pausado.");
+  }
   return new IORedis(url, {
     maxRetriesPerRequest: null,
     connectTimeout: 800,
@@ -14,9 +21,9 @@ function conexion() {
 }
 
 export async function encolarExtraccion(documentoId: string) {
+  const redis = conexion();
+  const cola = new Queue("extraccion", { connection: redis });
   try {
-    const redis = conexion();
-    const cola = new Queue("extraccion", { connection: redis });
     await cola.add(
       "extraer",
       { documentoId },
@@ -27,10 +34,11 @@ export async function encolarExtraccion(documentoId: string) {
         removeOnComplete: 100,
       },
     );
-    await cola.close();
-    redis.disconnect();
   } catch {
     await procesarDocumento(documentoId);
+  } finally {
+    await cola.close();
+    redis.disconnect();
   }
 }
 
@@ -51,6 +59,10 @@ export function iniciarWorker() {
     { connection: redis },
   );
   const cola = new Queue("aprendizaje", { connection: redis });
-  void cola.upsertJobScheduler("aprendizaje-horario", { every: 60 * 60 * 1000 }, { name: "detectar", data: {} });
+  void cola.upsertJobScheduler(
+    "aprendizaje-horario",
+    { every: 60 * 60 * 1000 },
+    { name: "detectar", data: {} },
+  );
   return { extraccion, aprendizaje, cola };
 }
