@@ -1,0 +1,11 @@
+{
+  "name": "Consorcio AI",
+  "short_name": "Consorcio",
+  "description": "Preanálisis crediticio para analistas. La IA recomienda y la persona decide.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "es",
+  "icons": [{ "src": "/icon.png", "sizes": "32x32", "type": "image/png" }]
+}

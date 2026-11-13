@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  ADMIN
+  ANALISTA
+  AUDITOR
+}
+
+enum TipoEntidad {
+  BANCO
+  FINANCIERA
+  COOPERATIVA
+}
+
+enum TipoCredito {
+  LIBRANZA
+  VEHICULO
+  VIVIENDA
+  CONSUMO
+}
+
+enum EstadoDocumento {
+  PENDIENTE
+  PROCESANDO
+  PROCESADO
+  REVISAR
+  ERROR
+}
+
+enum OrigenRegla {
+  MANUAL
+  SUGERIDA_IA
+}
+
+enum EstadoRegla {
+  ACTIVA
+  PENDIENTE
+  RECHAZADA
+  ARCHIVADA
+}
+
+enum ResultadoReal {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  nombre       String
+  passwordHash String
+  rol          Rol
+  activo       Boolean  @default(true)
+  creadoEn     DateTime @default(now())
+
+  politicas  Politica[]
+  reglas     Regla[]     @relation("ReglaDecidida")
+  casos      Caso[]
+  resultados Resultado[]
+  auditorias AuditLog[]
+}
+
+model Entidad {
+  id            String        @id @default(cuid())
+  nombre        String        @unique
+  tipo          TipoEntidad
+  activa        Boolean       @default(true)
+  politicas     Politica[]
+  reglas        Regla[]
+  evaluaciones  Evaluacion[]
+  calibraciones Calibracion[]
+}
+
+model Politica {
+  id          String   @id @default(cuid())
+  entidadId   String
+  entidad     Entidad  @relation(fields: [entidadId], references: [id])
+  version     Int
+  archivoKey  String
+  vigente     Boolean  @default(true)
+  subidaPorId String
+  subidaPor   User     @relation(fields: [subidaPorId], references: [id])
+  creadaEn    DateTime @default(now())
+  fragmentos  Fragmento[]
+  evaluaciones Evaluacion[]
+
+  @@unique([entidadId, version])
+  @@index([entidadId, vigente])
+}
+
+model Fragmento {
+  id         String                     @id @default(cuid())
+  politicaId String
+  politica   Politica                   @relation(fields: [politicaId], references: [id], onDelete: Cascade)
+  orden      Int
+  seccion    String?
+  pagina     Int?
+  texto      String
+  embedding  Unsupported("vector(384)")?
+
+  @@index([politicaId, orden])
+}
+
+model Regla {
+  id            String       @id @default(cuid())
+  entidadId     String
+  entidad       Entidad      @relation(fields: [entidadId], references: [id])
+  tipoCredito   TipoCredito?
+  campo         String
+  operador      String
+  valor         Json
+  mensaje       String
+  origen        OrigenRegla
+  estado        EstadoRegla
+  evidencia     Json?
+  creadaEn      DateTime     @default(now())
+  decididaPorId String?
+  decididaPor   User?        @relation("ReglaDecidida", fields: [decididaPorId], references: [id])
+  decididaEn    DateTime?
+
+  @@index([entidadId, estado])
+}
+
+model Cliente {
+  id               String           @id @default(cuid())
+  nombre           String
+  documentoHash    String           @unique
+  documentoCifrado String
+  casos            Caso[]
+  consentimientos  Consentimiento[]
+  creadoEn         DateTime         @default(now())
+  suprimidoEn      DateTime?
+}
+
+model Consentimiento {
+  id           String   @id @default(cuid())
+  clienteId    String
+  cliente      Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  finalidad    String
+  otorgadoEn   DateTime
+  evidenciaKey String?
+}
+
+model Caso {
+  id           String       @id @default(cuid())
+  clienteId    String
+  cliente      Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  tipoCredito  TipoCredito
+  perfil       Json?
+  documentos   Documento[]
+  evaluaciones Evaluacion[]
+  analistaId   String
+  analista     User         @relation(fields: [analistaId], references: [id])
+  creadoEn     DateTime     @default(now())
+
+  @@index([clienteId])
+  @@index([analistaId])
+}
+
+model Documento {
+  id             String          @id @default(cuid())
+  casoId         String
+  caso           Caso            @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  tipo           String
+  archivoKey     String
+  estado         EstadoDocumento @default(PENDIENTE)
+  datosExtraidos Json?
+  confianza      Float?
+  observaciones  String?
+}
+
+model Evaluacion {
+  id             String    @id @default(cuid())
+  casoId         String
+  caso           Caso      @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  entidadId      String
+  entidad        Entidad   @relation(fields: [entidadId], references: [id])
+  politicaId     String
+  politica       Politica  @relation(fields: [politicaId], references: [id])
+  cumpleReglas   Boolean
+  reglasDetalle  Json
+  probabilidad   Float?
+  confianza      String
+  ranking        Int
+  explicacion    String
+  citas          Json
+  modeloIA       String
+  versionPrompt  String
+  veredicto      String
+  resultado      Resultado?
+  creadaEn       DateTime  @default(now())
+
+  @@index([casoId, ranking])
+  @@index([entidadId])
+}
+
+model Resultado {
+  id              String        @id @default(cuid())
+  evaluacionId    String        @unique
+  evaluacion      Evaluacion    @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+  estado          ResultadoReal
+  motivo          String?
+  registradoPorId String
+  registradoPor   User          @relation(fields: [registradoPorId], references: [id])
+  registradoEn    DateTime      @default(now())
+}
+
+model Calibracion {
+  id                 String   @id @default(cuid())
+  entidadId          String
+  entidad            Entidad  @relation(fields: [entidadId], references: [id])
+  muestras           Int
+  aprobacionPredicha Float
+  aprobacionReal     Float
+  parametros         Json
+  calculadaEn        DateTime @default(now())
+
+  @@index([entidadId, calculadaEn])
+}
+
+model Ajuste {
+  clave String @id
+  valor String
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  usuario    User?    @relation(fields: [userId], references: [id])
+  accion     String
+  objetoTipo String
+  objetoId   String?
+  detalle    Json
+  ip         String?
+  creadoEn   DateTime @default(now())
+
+  @@index([objetoTipo, objetoId])
+  @@index([creadoEn])
+}
