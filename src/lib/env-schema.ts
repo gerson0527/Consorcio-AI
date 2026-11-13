@@ -23,6 +23,8 @@ export const esquemaEntorno = z.object({
   ),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.preprocess(vacioAIndefinido, z.url().optional()),
+  UPSTASH_REDIS_REST_URL: z.preprocess(vacioAIndefinido, z.url().optional()),
+  UPSTASH_REDIS_REST_TOKEN: z.preprocess(vacioAIndefinido, z.string().min(1).optional()),
   AUTH_SECRET: z.string().min(32, "AUTH_SECRET debe tener al menos 32 caracteres"),
   APP_URL: z.url("APP_URL debe ser una URL válida"),
   S3_ENDPOINT: z.url("S3_ENDPOINT debe ser una URL válida"),

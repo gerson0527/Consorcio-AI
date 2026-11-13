@@ -27,6 +27,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1168.0",
     "@base-ui/react": "^1.9.0",
     "@prisma/client": "^6.19.3",
+    "@upstash/redis": "^1.41.0",
     "bullmq": "^6.7.6",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
