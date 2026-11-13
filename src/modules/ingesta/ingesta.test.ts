@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { validarArchivo } from "@/modules/ingesta/archivos";
 import { extraerSintetico, debeRevisar } from "@/modules/ingesta/extraer";
+import { MAXIMO_ARCHIVO_BYTES } from "@/modules/ingesta/limites";
 import { consolidarPerfil, esquemaPerfil } from "@/modules/ingesta/perfil";
 
 describe("perfil", () => {
@@ -70,8 +71,25 @@ tipoContrato: FIJO`),
 
 describe("archivos", () => {
   it("rechaza un ejecutable y un pdf que no lo es", () => {
-    expect(validarArchivo(Buffer.from("MZ ejecutable"), "application/pdf").ok).toBe(false);
-    expect(validarArchivo(Buffer.from("%PDF-1.4 ejemplo"), "application/pdf").ok).toBe(true);
+    expect(validarArchivo(Buffer.from("MZ ejecutable"), "application/pdf").ok).toBe(
+      false,
+    );
+    expect(validarArchivo(Buffer.from("%PDF-1.4 ejemplo"), "application/pdf").ok).toBe(
+      true,
+    );
     expect(validarArchivo(Buffer.alloc(0), "text/plain").ok).toBe(false);
+  });
+
+  it("permite archivos de hasta 10 MB y rechaza los que superan el límite", () => {
+    const archivoValido = Buffer.alloc(MAXIMO_ARCHIVO_BYTES);
+    archivoValido.write("%PDF");
+    const archivoGrande = Buffer.alloc(MAXIMO_ARCHIVO_BYTES + 1);
+    archivoGrande.write("%PDF");
+
+    expect(validarArchivo(archivoValido, "application/pdf").ok).toBe(true);
+    expect(validarArchivo(archivoGrande, "application/pdf")).toEqual({
+      ok: false,
+      error: "El archivo supera el límite de 10 MB.",
+    });
   });
 });

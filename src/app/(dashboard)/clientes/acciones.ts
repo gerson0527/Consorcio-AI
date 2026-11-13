@@ -18,6 +18,7 @@ import { registrarAuditoria } from "@/modules/auditoria";
 import { evaluarCaso } from "@/modules/evaluacion";
 import { claveAleatoria, validarArchivo } from "@/modules/ingesta";
 import { encolarExtraccion, redisDisponible } from "@/jobs/cola";
+import { MAXIMO_ARCHIVO_BYTES } from "@/modules/ingesta/limites";
 
 const esquemaCliente = z.object({
   nombre: z.string().trim().min(3).max(120),
@@ -134,7 +135,11 @@ export async function subirDocumento(formData: FormData) {
   if (!(archivo instanceof File)) redirect(`/clientes/${casoId}?error=archivo`);
   const bytes = Buffer.from(await archivo.arrayBuffer());
   const validacion = validarArchivo(bytes, archivo.type || "text/plain");
-  if (!validacion.ok) redirect(`/clientes/${casoId}?error=archivo`);
+  if (!validacion.ok) {
+    redirect(
+      `/clientes/${casoId}?error=${bytes.length > MAXIMO_ARCHIVO_BYTES ? "archivo_tamano" : "archivo"}`,
+    );
+  }
   const caso = await prisma.caso.findFirst({
     where: { id: casoId, ...filtroCasoPropio(usuario) },
     include: { cliente: { include: { consentimientos: true } } },

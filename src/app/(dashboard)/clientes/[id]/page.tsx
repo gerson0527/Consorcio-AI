@@ -26,6 +26,7 @@ import { puede } from "@/lib/autorizacion";
 import { documentoEnmascarado } from "@/lib/campos";
 import { formatoCop } from "@/lib/formato";
 import { redisDisponible } from "@/jobs/cola";
+import { SelectorArchivo } from "@/components/selector-archivo";
 import { prisma } from "@/lib/prisma";
 import { sesionActual } from "@/lib/sesion";
 import type { Perfil } from "@/modules/ingesta/perfil";
@@ -144,9 +145,16 @@ export default async function CasoCliente({
           ningún archivo.
         </p>
       ) : null}
+      {avisos.error === "archivo_tamano" ? (
+        <p className="text-sm text-destructive" role="alert">
+          No se subió el archivo: supera el límite de 10 MB. Elige una imagen o documento
+          más pequeño.
+        </p>
+      ) : null}
       {avisos.error &&
       avisos.error !== "cerrado" &&
-      avisos.error !== "procesamiento_pausado" ? (
+      avisos.error !== "procesamiento_pausado" &&
+      avisos.error !== "archivo_tamano" ? (
         <p className="text-sm text-destructive" role="alert">
           No se pudo completar la acción. Revisa el archivo o los datos.
         </p>
@@ -288,12 +296,7 @@ export default async function CasoCliente({
                 </label>
                 <label className="flex min-w-0 flex-col gap-1.5 text-sm text-muted-foreground">
                   Archivo
-                  <input
-                    name="archivo"
-                    type="file"
-                    required
-                    className="block h-11 w-full min-w-0 truncate rounded-lg border border-input bg-background px-3 py-2 text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-foreground file:px-3 file:py-1 file:text-sm file:font-medium file:text-background"
-                  />
+                  <SelectorArchivo />
                 </label>
                 <Button type="submit" variant="outline" className="bg-background">
                   {documentos.length ? "Subir otro documento" : "Subir documento"}

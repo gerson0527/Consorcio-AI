@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: false,
   partialPrefetching: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "11mb",
+    },
+  },
   async headers() {
     const seguridad = [
       { key: "X-Frame-Options", value: "DENY" },

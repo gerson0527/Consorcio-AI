@@ -1,4 +1,4 @@
-const MAXIMO = 10 * 1024 * 1024;
+import { MAXIMO_ARCHIVO_BYTES } from "@/modules/ingesta/limites";
 
 const firmas: Record<string, number[] | null> = {
   "application/pdf": [0x25, 0x50, 0x44, 0x46],
@@ -9,8 +9,11 @@ const firmas: Record<string, number[] | null> = {
 };
 
 export function validarArchivo(bytes: Buffer, tipoDeclarado: string) {
-  if (bytes.length === 0 || bytes.length > MAXIMO) {
-    return { ok: false as const, error: "El archivo supera el tamaño permitido o está vacío." };
+  if (bytes.length === 0) {
+    return { ok: false as const, error: "El archivo está vacío." };
+  }
+  if (bytes.length > MAXIMO_ARCHIVO_BYTES) {
+    return { ok: false as const, error: "El archivo supera el límite de 10 MB." };
   }
   if (!(tipoDeclarado in firmas)) {
     return { ok: false as const, error: "Tipo de archivo no permitido." };
@@ -20,7 +23,10 @@ export function validarArchivo(bytes: Buffer, tipoDeclarado: string) {
   }
   const firma = firmas[tipoDeclarado];
   if (firma && !firma.every((byte, indice) => bytes[indice] === byte)) {
-    return { ok: false as const, error: "El contenido no coincide con el tipo declarado." };
+    return {
+      ok: false as const,
+      error: "El contenido no coincide con el tipo declarado.",
+    };
   }
   if (tipoDeclarado === "text/plain" && bytes.includes(0)) {
     return { ok: false as const, error: "El archivo de texto no es válido." };
