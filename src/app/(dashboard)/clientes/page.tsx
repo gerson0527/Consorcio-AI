@@ -6,10 +6,16 @@ import { metadatosPrivados } from "@/lib/metadatos";
 import { AccionesFilaCliente } from "@/components/acciones-fila-cliente";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MarcaEjemplo, Pastilla, creditoLegible, textoDocumentos } from "@/components/presentacion";
+import {
+  MarcaEjemplo,
+  Pastilla,
+  creditoLegible,
+  textoDocumentos,
+} from "@/components/presentacion";
 import { documentoEnmascarado } from "@/lib/campos";
 import { estadoCaso } from "@/lib/estado-caso";
 import { puede } from "@/lib/autorizacion";
+import { filtroCasoPropio } from "@/lib/acceso-clientes";
 import { prisma } from "@/lib/prisma";
 import { sesionActual } from "@/lib/sesion";
 
@@ -24,36 +30,53 @@ const campo =
 export default async function Clientes({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; estado?: string; tipo?: string; error?: string; aviso?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    estado?: string;
+    tipo?: string;
+    error?: string;
+    aviso?: string;
+  }>;
 }) {
   const usuario = await sesionActual();
   const filtros = await searchParams;
+  const filtroCaso = {
+    ...filtroCasoPropio(usuario),
+    ...(filtros.tipo ? { tipoCredito: filtros.tipo as never } : {}),
+  };
+  const esAdministrador = usuario.rol === "ADMIN";
   const [clientes, ejemplos] = await Promise.all([
     prisma.cliente.findMany({
       where: {
         suprimidoEn: null,
         nombre: filtros.q ? { contains: filtros.q, mode: "insensitive" } : undefined,
-        casos: filtros.tipo ? { some: { tipoCredito: filtros.tipo as never } } : undefined,
+        ...(Object.keys(filtroCaso).length > 0 ? { casos: { some: filtroCaso } } : {}),
       },
       include: {
         casos: {
           orderBy: { creadoEn: "desc" },
           take: 1,
           include: {
+            analista: { select: { nombre: true } },
             documentos: true,
-            evaluaciones: { orderBy: { ranking: "asc" }, include: { entidad: true, resultado: true } },
+            evaluaciones: {
+              orderBy: { ranking: "asc" },
+              include: { entidad: true, resultado: true },
+            },
           },
         },
       },
       orderBy: { creadoEn: "desc" },
     }),
-    prisma.entidad.count({ where: { nombre: { contains: "ejemplo", mode: "insensitive" } } }),
+    prisma.entidad.count({
+      where: { nombre: { contains: "ejemplo", mode: "insensitive" } },
+    }),
   ]);
 
   const puedeEditar = puede(usuario.rol, "editar_clientes");
   const puedeEliminar = puede(usuario.rol, "suprimir_datos");
   const conAcciones = puedeEditar || puedeEliminar;
-  const columnas = conAcciones ? 6 : 5;
+  const columnas = 5 + Number(conAcciones) + Number(esAdministrador);
 
   const filas = clientes
     .map((cliente) => {
@@ -63,7 +86,8 @@ export default async function Clientes({
         documentos: caso?.documentos.map((documento) => documento.estado) ?? [],
         revisar: (perfil.revisar?.length ?? 0) > 0,
         evaluaciones: caso?.evaluaciones.length ?? 0,
-        conResultado: caso?.evaluaciones.some((evaluacion) => evaluacion.resultado) ?? false,
+        conResultado:
+          caso?.evaluaciones.some((evaluacion) => evaluacion.resultado) ?? false,
       });
       return { cliente, caso, estado, mejor: caso?.evaluaciones[0] };
     })
@@ -82,12 +106,21 @@ export default async function Clientes({
           </Button>
         ) : null}
       </div>
-      {filtros.error === "permiso" ? <p className="text-sm text-destructive">No tienes permiso para esa acción.</p> : null}
-      {filtros.aviso === "suprimido" ? <p className="text-sm text-success">Los datos del cliente se suprimieron.</p> : null}
+      {filtros.error === "permiso" ? (
+        <p className="text-sm text-destructive">No tienes permiso para esa acción.</p>
+      ) : null}
+      {filtros.aviso === "suprimido" ? (
+        <p className="text-sm text-success">Los datos del cliente se suprimieron.</p>
+      ) : null}
       <form className="flex flex-col gap-3 lg:flex-row lg:items-end">
         <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm text-muted-foreground">
           Buscar cliente
-          <Input name="q" defaultValue={filtros.q} placeholder="Nombre o documento" className="h-11 bg-card" />
+          <Input
+            name="q"
+            defaultValue={filtros.q}
+            placeholder="Nombre o documento"
+            className="h-11 bg-card"
+          />
         </label>
         <label className="flex w-full flex-col gap-1.5 text-sm text-muted-foreground lg:w-44">
           Estado
@@ -118,11 +151,14 @@ export default async function Clientes({
           <thead className="border-b text-left text-muted-foreground">
             <tr>
               <th className="px-5 py-3 font-medium">Cliente</th>
+              {esAdministrador ? <th className="px-5 py-3 font-medium">Asesor</th> : null}
               <th className="px-5 py-3 font-medium">Crédito</th>
               <th className="px-5 py-3 font-medium">Documentos</th>
               <th className="px-5 py-3 font-medium">Mejor opción</th>
               <th className="px-5 py-3 font-medium">Estado</th>
-              {conAcciones ? <th className="px-5 py-3 text-right font-medium">Acciones</th> : null}
+              {conAcciones ? (
+                <th className="px-5 py-3 text-right font-medium">Acciones</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -136,26 +172,46 @@ export default async function Clientes({
               filas.map((fila) => (
                 <tr key={fila.cliente.id} className="border-b last:border-0">
                   <td className="px-5 py-4">
-                    <Link href={`/clientes/${fila.cliente.id}`} className="font-semibold text-foreground underline-offset-2 hover:underline">
+                    <Link
+                      href={`/clientes/${fila.cliente.id}`}
+                      className="font-semibold text-foreground underline-offset-2 hover:underline"
+                    >
                       {fila.cliente.nombre}
                     </Link>
-                    <p className="text-muted-foreground">Doc. {documentoEnmascarado(fila.cliente.documentoCifrado)}</p>
+                    <p className="text-muted-foreground">
+                      Doc. {documentoEnmascarado(fila.cliente.documentoCifrado)}
+                    </p>
                   </td>
+                  {esAdministrador ? (
+                    <td className="px-5 py-4">
+                      {fila.caso?.analista.nombre ?? "Sin asesor"}
+                    </td>
+                  ) : null}
                   <td className="px-5 py-4">{creditoLegible(fila.caso?.tipoCredito)}</td>
                   <td className="px-5 py-4 text-muted-foreground">
-                    {textoDocumentos(fila.caso?.documentos.map((documento) => documento.estado) ?? [])}
+                    {textoDocumentos(
+                      fila.caso?.documentos.map((documento) => documento.estado) ?? [],
+                    )}
                   </td>
                   <td className="px-5 py-4 font-semibold">
-                    {fila.mejor
-                      ? `${fila.mejor.entidad.nombre}${fila.mejor.probabilidad === null ? "" : ` · ${Math.round(fila.mejor.probabilidad * 100)} %`}`
-                      : <span className="font-normal text-muted-foreground">Sin evaluar</span>}
+                    {fila.mejor ? (
+                      `${fila.mejor.entidad.nombre}${fila.mejor.probabilidad === null ? "" : ` · ${Math.round(fila.mejor.probabilidad * 100)} %`}`
+                    ) : (
+                      <span className="font-normal text-muted-foreground">
+                        Sin evaluar
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-4">
                     <Pastilla>{fila.estado}</Pastilla>
                   </td>
                   {conAcciones ? (
                     <td className="px-5 py-3 text-right">
-                      <AccionesFilaCliente id={fila.cliente.id} editar={puedeEditar} eliminar={puedeEliminar} />
+                      <AccionesFilaCliente
+                        id={fila.cliente.id}
+                        editar={puedeEditar}
+                        eliminar={puedeEliminar}
+                      />
                     </td>
                   ) : null}
                 </tr>

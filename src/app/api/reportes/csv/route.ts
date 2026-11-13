@@ -14,14 +14,22 @@ export async function GET(request: Request) {
   const desde = new Date(url.searchParams.get("desde") ?? "2020-01-01");
   const hasta = new Date(url.searchParams.get("hasta") ?? "2100-01-01");
   const evaluaciones = await prisma.evaluacion.findMany({
-    where: { creadaEn: { gte: desde, lte: hasta } },
+    where: {
+      creadaEn: { gte: desde, lte: hasta },
+      ...(sesion.user.rol === "ANALISTA"
+        ? { caso: { is: { analistaId: sesion.user.id } } }
+        : {}),
+    },
     include: { entidad: true, resultado: true, caso: true },
   });
   const filas: FilaReporte[] = evaluaciones.map((evaluacion) => ({
     casoId: evaluacion.casoId,
     entidad: evaluacion.entidad.nombre,
     veredicto: evaluacion.veredicto,
-    resultado: evaluacion.resultado && evaluacion.resultado.estado !== "PENDIENTE" ? evaluacion.resultado.estado : null,
+    resultado:
+      evaluacion.resultado && evaluacion.resultado.estado !== "PENDIENTE"
+        ? evaluacion.resultado.estado
+        : null,
     motivo: evaluacion.resultado?.motivo ?? null,
     creadoEn: evaluacion.caso.creadoEn,
     resultadoEn: evaluacion.resultado?.registradoEn ?? null,
@@ -32,7 +40,10 @@ export async function GET(request: Request) {
     ["casos", String(resumen.casos)],
     ["evaluaciones", String(resumen.evaluaciones)],
     ["coincidencia", resumen.coincidencia === null ? "" : String(resumen.coincidencia)],
-    ...resumen.tasaPorEntidad.map((entidad) => [entidad.entidad, String(entidad.tasaAprobacion)]),
+    ...resumen.tasaPorEntidad.map((entidad) => [
+      entidad.entidad,
+      String(entidad.tasaAprobacion),
+    ]),
     ...resumen.motivos.map((motivo) => [motivo.motivo, String(motivo.cantidad)]),
   ]);
   return new NextResponse(csv, {

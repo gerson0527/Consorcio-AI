@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { cifrarCampo, hashDocumento } from "@/lib/crypto";
+import { filtroCasoPropio, filtroClienteAccesible } from "@/lib/acceso-clientes";
 import { analizarEntorno } from "@/lib/env-schema";
 import { guardarArchivo } from "@/lib/almacen";
 import { limitar } from "@/lib/limite";
@@ -40,7 +41,14 @@ export async function crearCliente(formData: FormData) {
   if (!datos.success) redirect("/clientes/nuevo?error=datos");
   const hash = hashDocumento(datos.data.documento);
   const existente = await prisma.cliente.findUnique({ where: { documentoHash: hash } });
-  if (existente && !existente.suprimidoEn) redirect(`/clientes/${existente.id}?aviso=existente`);
+  if (existente && !existente.suprimidoEn) {
+    const accesible = await prisma.cliente.findFirst({
+      where: { id: existente.id, ...filtroClienteAccesible(usuario) },
+      select: { id: true },
+    });
+    if (accesible) redirect(`/clientes/${existente.id}?aviso=existente`);
+    redirect("/clientes/nuevo?error=datos");
+  }
   const cliente = await prisma.cliente.create({
     data: {
       nombre: datos.data.nombre,
@@ -72,10 +80,12 @@ export async function editarCliente(formData: FormData) {
   const usuario = await exigirAccion("editar_clientes");
   const id = z.string().parse(formData.get("id"));
   const nombre = z.string().trim().min(3).max(120).safeParse(formData.get("nombre"));
-  const tipo = z.enum(["LIBRANZA", "VEHICULO", "VIVIENDA", "CONSUMO"]).safeParse(formData.get("tipoCredito"));
+  const tipo = z
+    .enum(["LIBRANZA", "VEHICULO", "VIVIENDA", "CONSUMO"])
+    .safeParse(formData.get("tipoCredito"));
   if (!nombre.success) redirect(`/clientes/${id}?error=datos`);
-  const cliente = await prisma.cliente.findUnique({
-    where: { id },
+  const cliente = await prisma.cliente.findFirst({
+    where: { id, ...filtroClienteAccesible(usuario) },
     include: {
       casos: {
         orderBy: { creadoEn: "desc" },
@@ -84,7 +94,7 @@ export async function editarCliente(formData: FormData) {
       },
     },
   });
-  if (!cliente || cliente.suprimidoEn) redirect("/clientes");
+  if (!cliente || cliente.suprimidoEn) redirect("/clientes?error=permiso");
   const caso = cliente.casos[0];
   const cerrado = caso?.evaluaciones.some(
     (evaluacion) => evaluacion.resultado && evaluacion.resultado.estado !== "PENDIENTE",
@@ -92,7 +102,10 @@ export async function editarCliente(formData: FormData) {
   if (cerrado) redirect(`/clientes/${id}?error=cerrado`);
   await prisma.cliente.update({ where: { id }, data: { nombre: nombre.data } });
   if (caso && tipo.success) {
-    await prisma.caso.update({ where: { id: caso.id }, data: { tipoCredito: tipo.data } });
+    await prisma.caso.update({
+      where: { id: caso.id },
+      data: { tipoCredito: tipo.data },
+    });
   }
   await registrarAuditoria({
     userId: usuario.id,
@@ -119,11 +132,12 @@ export async function subirDocumento(formData: FormData) {
   const bytes = Buffer.from(await archivo.arrayBuffer());
   const validacion = validarArchivo(bytes, archivo.type || "text/plain");
   if (!validacion.ok) redirect(`/clientes/${casoId}?error=archivo`);
-  const caso = await prisma.caso.findUnique({
-    where: { id: casoId },
+  const caso = await prisma.caso.findFirst({
+    where: { id: casoId, ...filtroCasoPropio(usuario) },
     include: { cliente: { include: { consentimientos: true } } },
   });
-  if (!caso || caso.cliente.consentimientos.length === 0) redirect("/clientes?error=permiso");
+  if (!caso || caso.cliente.consentimientos.length === 0)
+    redirect("/clientes?error=permiso");
   const clave = claveAleatoria(casoId);
   await guardarArchivo(clave, bytes, archivo.type || "text/plain");
   const documento = await prisma.documento.create({
@@ -144,8 +158,10 @@ export async function subirDocumento(formData: FormData) {
 export async function evaluar(formData: FormData) {
   const usuario = await exigirAccion("evaluar");
   const casoId = z.string().parse(formData.get("casoId"));
-  const caso = await prisma.caso.findUnique({ where: { id: casoId } });
-  if (!caso) redirect("/clientes");
+  const caso = await prisma.caso.findFirst({
+    where: { id: casoId, ...filtroCasoPropio(usuario) },
+  });
+  if (!caso) redirect("/clientes?error=permiso");
   await evaluarCaso(casoId, usuario.id, await ipSolicitud());
   redirect(`/clientes/${caso.clienteId}?aviso=evaluado`);
 }
@@ -155,8 +171,13 @@ export async function registrarResultado(formData: FormData) {
   const evaluacionId = z.string().parse(formData.get("evaluacionId"));
   const estado = z.enum(["APROBADO", "RECHAZADO"]).parse(formData.get("estado"));
   const motivo = z.string().trim().min(3).max(300).parse(formData.get("motivo"));
-  const evaluacion = await prisma.evaluacion.findUnique({ where: { id: evaluacionId } });
-  if (!evaluacion) redirect("/clientes");
+  const evaluacion = await prisma.evaluacion.findFirst({
+    where: {
+      id: evaluacionId,
+      ...(usuario.rol === "ANALISTA" ? { caso: { is: filtroCasoPropio(usuario) } } : {}),
+    },
+  });
+  if (!evaluacion) redirect("/clientes?error=permiso");
   await prisma.resultado.upsert({
     where: { evaluacionId },
     update: { estado, motivo, registradoPorId: usuario.id, registradoEn: new Date() },
@@ -184,7 +205,10 @@ export async function suprimirCliente(formData: FormData) {
     include: { casos: { include: { documentos: true } } },
   });
   if (!cliente) redirect("/clientes");
-  await prisma.caso.updateMany({ where: { clienteId: id }, data: { perfil: Prisma.JsonNull } });
+  await prisma.caso.updateMany({
+    where: { clienteId: id },
+    data: { perfil: Prisma.JsonNull },
+  });
   await prisma.documento.deleteMany({ where: { caso: { clienteId: id } } });
   await prisma.cliente.update({
     where: { id },
@@ -201,7 +225,12 @@ export async function suprimirCliente(formData: FormData) {
     accion: "suprimir_cliente",
     objetoTipo: "Cliente",
     objetoId: id,
-    detalle: { documentos: cliente.casos.reduce((total, caso) => total + caso.documentos.length, 0) },
+    detalle: {
+      documentos: cliente.casos.reduce(
+        (total, caso) => total + caso.documentos.length,
+        0,
+      ),
+    },
   });
   redirect("/clientes?aviso=suprimido");
 }

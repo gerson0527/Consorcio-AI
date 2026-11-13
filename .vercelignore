@@ -1,0 +1,14 @@
+.env
+.env.*
+**/.env
+**/.env.*
+.data
+.data/**
+**/.data
+**/.data/**
+.git
+.next
+.vercel
+node_modules
+.claude
+.cursor

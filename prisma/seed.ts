@@ -13,10 +13,26 @@ const usuarios = [
 ] as const;
 
 const entidades: Array<[string, TipoEntidad, string]> = [
-  ["Banco Ejemplo Andino", "BANCO", "La edad mínima es 18 años y la máxima es 70.\n--- pagina 2 ---\n## Ingresos\nEl ingreso mensual mínimo de este ejemplo es 2000000."],
-  ["Financiera Ejemplo Pacífico", "FINANCIERA", "## Antigüedad\nEste ejemplo exige 18 meses de antigüedad laboral."],
-  ["Cooperativa Ejemplo Central", "COOPERATIVA", "## Contrato\nSe aceptan contratos FIJO u OBRA LABOR."],
-  ["Banco Ejemplo Caribe", "BANCO", "## Obligaciones\nLas obligaciones mensuales no deben superar el 40 por ciento del ingreso."],
+  [
+    "Banco Ejemplo Andino",
+    "BANCO",
+    "La edad mínima es 18 años y la máxima es 70.\n--- pagina 2 ---\n## Ingresos\nEl ingreso mensual mínimo de este ejemplo es 2000000.",
+  ],
+  [
+    "Financiera Ejemplo Pacífico",
+    "FINANCIERA",
+    "## Antigüedad\nEste ejemplo exige 18 meses de antigüedad laboral.",
+  ],
+  [
+    "Cooperativa Ejemplo Central",
+    "COOPERATIVA",
+    "## Contrato\nSe aceptan contratos FIJO u OBRA LABOR.",
+  ],
+  [
+    "Banco Ejemplo Caribe",
+    "BANCO",
+    "## Obligaciones\nLas obligaciones mensuales no deben superar el 40 por ciento del ingreso.",
+  ],
 ];
 
 async function main() {
@@ -28,7 +44,9 @@ async function main() {
       create: { email, nombre, rol, passwordHash },
     });
   }
-  const admin = await prisma.user.findUniqueOrThrow({ where: { email: "admin@ejemplo.local" } });
+  const admin = await prisma.user.findUniqueOrThrow({
+    where: { email: "admin@ejemplo.local" },
+  });
 
   for (const [nombre, tipo, texto] of entidades) {
     const entidad = await prisma.entidad.upsert({
@@ -46,7 +64,9 @@ async function main() {
           vigente: true,
           subidaPorId: admin.id,
           fragmentos: {
-            create: fragmentarPolitica(`# EJEMPLO, no es una política real\n${texto}`).map((fragmento) => ({
+            create: fragmentarPolitica(
+              `# EJEMPLO, no es una política real\n${texto}`,
+            ).map((fragmento) => ({
               orden: fragmento.orden,
               seccion: fragmento.seccion,
               pagina: fragmento.pagina,
@@ -71,8 +91,20 @@ async function main() {
     if (reglas === 0) {
       await prisma.regla.createMany({
         data: [
-          regla(entidad.id, "ingresoMensual", ">=", 2_000_000, "Ingreso de ejemplo mínimo."),
-          regla(entidad.id, "antiguedadLaboralMeses", ">=", nombre.includes("Pacífico") ? 18 : 12, "Antigüedad de ejemplo."),
+          regla(
+            entidad.id,
+            "ingresoMensual",
+            ">=",
+            2_000_000,
+            "Ingreso de ejemplo mínimo.",
+          ),
+          regla(
+            entidad.id,
+            "antiguedadLaboralMeses",
+            ">=",
+            nombre.includes("Pacífico") ? 18 : 12,
+            "Antigüedad de ejemplo.",
+          ),
           regla(entidad.id, "edad", "between", [18, 70], "Rango de edad de ejemplo."),
         ],
       });
@@ -81,7 +113,13 @@ async function main() {
   console.info("Datos de ejemplo listos. Contraseña de desarrollo: Ejemplo.2026");
 }
 
-function regla(entidadId: string, campo: string, operador: string, valor: unknown, mensaje: string) {
+function regla(
+  entidadId: string,
+  campo: string,
+  operador: string,
+  valor: unknown,
+  mensaje: string,
+) {
   return {
     entidadId,
     campo,
@@ -94,7 +132,6 @@ function regla(entidadId: string, campo: string, operador: string, valor: unknow
   };
 }
 
-main()
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().finally(async () => {
+  await prisma.$disconnect();
+});

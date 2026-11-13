@@ -129,24 +129,44 @@ export default function Privacidad() {
     <>
       <header className="border-b">
         <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/" className="inline-flex min-h-11 items-center gap-3 text-sm font-semibold">
-            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">CF</span>
+          <Link
+            href="/"
+            className="inline-flex min-h-11 items-center gap-3 text-sm font-semibold"
+          >
+            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">
+              CF
+            </span>
             Consorcio AI
           </Link>
-          <Link href="/login" className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/login"
+            className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"
+          >
             Ingresar
           </Link>
         </div>
       </header>
       <main id="contenido" className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
-        <p className="font-mono text-xs text-muted-foreground">Habeas data · Ley 1581 de 2012</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">Política de privacidad</h1>
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">
-          Cómo Consorcio AI trata los datos de quien gestiona el crédito y de los clientes que se cargan para encontrar la mejor opción.
+        <p className="font-mono text-xs text-muted-foreground">
+          Habeas data · Ley 1581 de 2012
         </p>
-        <nav aria-label="Contenido de la política" className="mt-8 flex flex-col gap-1 border-y py-4">
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+          Política de privacidad
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+          Cómo Consorcio AI trata los datos de quien gestiona el crédito y de los clientes
+          que se cargan para encontrar la mejor opción.
+        </p>
+        <nav
+          aria-label="Contenido de la política"
+          className="mt-8 flex flex-col gap-1 border-y py-4"
+        >
           {secciones.map((seccion) => (
-            <a key={seccion.id} href={`#${seccion.id}`} className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+            <a
+              key={seccion.id}
+              href={`#${seccion.id}`}
+              className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            >
               {seccion.titulo}
             </a>
           ))}
@@ -164,9 +184,10 @@ export default function Privacidad() {
           ))}
         </div>
       </main>
-      <footer className="border-t">
+      <footer className="border-">
         <p className="mx-auto w-full max-w-3xl px-4 py-6 text-sm text-muted-foreground sm:px-6">
-          Consorcio Finance. El resultado mostrado es una recomendación, no una decisión de crédito.
+          Consorcio Finance. El resultado mostrado es una recomendación, no una decisión
+          de crédito.
         </p>
       </footer>
     </>
