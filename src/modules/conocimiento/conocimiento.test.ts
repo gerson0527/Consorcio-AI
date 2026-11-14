@@ -4,6 +4,7 @@ import { DIMENSION_EMBEDDING } from "@/modules/conocimiento/constantes";
 import { buscarEnMemoria } from "@/modules/conocimiento/buscar";
 import { embeddingLocal } from "@/modules/conocimiento/embedding";
 import { fragmentarPolitica } from "@/modules/conocimiento/fragmentar";
+import { leerPoliticaMarkdown } from "@/modules/conocimiento/markdown";
 
 const politica = `# EJEMPLO
 ## Edad
@@ -36,5 +37,26 @@ describe("fragmentos y búsqueda", () => {
 
   it("usa una sola dimensión", () => {
     expect(embeddingLocal("politica de ejemplo")).toHaveLength(DIMENSION_EMBEDDING);
+  });
+});
+
+describe("políticas Markdown", () => {
+  it("acepta .md UTF-8 y conserva su contenido", () => {
+    const texto = "# Requisitos\n\nLa edad mínima es de 18 años.";
+    expect(leerPoliticaMarkdown("politica.MD", Buffer.from(texto))).toEqual({
+      ok: true,
+      texto,
+    });
+  });
+
+  it("rechaza otras extensiones y texto que no sea UTF-8 válido", () => {
+    const texto = Buffer.from("# Requisitos\n\nLa edad mínima es de 18 años.");
+    expect(leerPoliticaMarkdown("politica.pdf", texto)).toEqual({
+      ok: false,
+      error: "formato",
+    });
+    expect(
+      leerPoliticaMarkdown("politica.md", Buffer.concat([texto, Buffer.from([0xff])])),
+    ).toEqual({ ok: false, error: "archivo" });
   });
 });

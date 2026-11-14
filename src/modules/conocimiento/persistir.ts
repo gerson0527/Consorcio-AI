@@ -48,12 +48,6 @@ export async function guardarPolitica(entrada: {
   return politica;
 }
 
-export function textoPlanoDePdf(bytes: Buffer) {
-  const crudo = bytes.toString("latin1");
-  const encontrados = [...crudo.matchAll(/\((?:\\\)|[^)]){2,}\)/g)].map((coincidencia) =>
-    coincidencia[0].slice(1, -1).replace(/\\n/g, "\n"),
-  );
-  return encontrados.join("\n");
-}
-
-export type PoliticaGuardada = Prisma.PoliticaGetPayload<{ include: { fragmentos: true } }>;
+export type PoliticaGuardada = Prisma.PoliticaGetPayload<{
+  include: { fragmentos: true };
+}>;

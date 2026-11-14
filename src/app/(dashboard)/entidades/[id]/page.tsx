@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 
 import { metadatosPrivados } from "@/lib/metadatos";
 
-import { crearRegla, guardarEntidad, subirPolitica } from "@/app/(dashboard)/entidades/acciones";
+import {
+  crearRegla,
+  guardarEntidad,
+  subirPolitica,
+} from "@/app/(dashboard)/entidades/acciones";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { puede } from "@/lib/autorizacion";
@@ -17,7 +21,10 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const entidad = await prisma.entidad.findUnique({ where: { id }, select: { nombre: true } });
+  const entidad = await prisma.entidad.findUnique({
+    where: { id },
+    select: { nombre: true },
+  });
   const nombre = entidad?.nombre ?? "Entidad";
   return metadatosPrivados(
     `Política de ${nombre}`,
@@ -38,26 +45,48 @@ export default async function DetalleEntidad({
   const entidad = await prisma.entidad.findUnique({
     where: { id },
     include: {
-      politicas: { orderBy: { version: "desc" }, include: { fragmentos: { orderBy: { orden: "asc" } } } },
+      politicas: {
+        orderBy: { version: "desc" },
+        include: { fragmentos: { orderBy: { orden: "asc" } } },
+      },
       reglas: { orderBy: { creadaEn: "desc" } },
       calibraciones: { orderBy: { calculadaEn: "desc" }, take: 1 },
     },
   });
   if (!entidad) notFound();
-  const seleccionada = entidad.politicas.find((politica) => String(politica.version) === consulta.version) ?? entidad.politicas[0];
+  const seleccionada =
+    entidad.politicas.find((politica) => String(politica.version) === consulta.version) ??
+    entidad.politicas[0];
   return (
     <main id="contenido" className="flex flex-col gap-6">
-      <Link href="/entidades" className="text-sm text-muted-foreground">Volver a entidades</Link>
+      <Link href="/entidades" className="text-sm text-muted-foreground">
+        Volver a entidades
+      </Link>
       <h1 className="text-2xl font-semibold">{entidad.nombre}</h1>
-      {consulta.error ? <p className="text-sm text-destructive">No se pudo guardar. Revisa el archivo o la regla.</p> : null}
+      {consulta.error ? (
+        <p className="text-sm text-destructive">
+          {consulta.error === "formato"
+            ? "La política debe ser un archivo Markdown con extensión .md."
+            : consulta.error === "texto"
+              ? "El archivo Markdown debe contener al menos 20 caracteres."
+              : consulta.error === "regla"
+                ? "No se pudo guardar la regla. Revisa los datos ingresados."
+                : "El archivo debe ser texto UTF-8 válido y no superar 10 MB."}
+        </p>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-[12px] border bg-card p-4">
           <h2 className="font-medium">Versiones</h2>
-          {entidad.politicas.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">No hay políticas.</p> : (
+          {entidad.politicas.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">No hay políticas.</p>
+          ) : (
             <ul className="mt-3 flex flex-col gap-2 text-sm">
               {entidad.politicas.map((politica) => (
                 <li key={politica.id}>
-                  <Link href={`/entidades/${entidad.id}?version=${politica.version}`} className="text-primary">
+                  <Link
+                    href={`/entidades/${entidad.id}?version=${politica.version}`}
+                    className="text-primary"
+                  >
                     Versión {politica.version} {politica.vigente ? "(vigente)" : ""}
                   </Link>
                 </li>
@@ -66,33 +95,58 @@ export default async function DetalleEntidad({
           )}
           {seleccionada ? (
             <pre className="mt-4 max-h-80 overflow-auto whitespace-pre-wrap rounded-[12px] bg-muted p-3 text-xs">
-              {seleccionada.fragmentos.map((fragmento) => `p.${fragmento.pagina ?? "?"} ${fragmento.seccion ?? ""}\n${fragmento.texto}`).join("\n\n")}
+              {seleccionada.fragmentos
+                .map(
+                  (fragmento) =>
+                    `p.${fragmento.pagina ?? "?"} ${fragmento.seccion ?? ""}\n${fragmento.texto}`,
+                )
+                .join("\n\n")}
             </pre>
           ) : null}
           {puede(usuario.rol, "subir_politica") ? (
             <form action={subirPolitica} className="mt-4 grid gap-3">
               <input type="hidden" name="entidadId" value={entidad.id} />
-              <Input name="archivo" type="file" required className="h-11" />
-              <Button type="submit" variant="outline">Subir política nueva</Button>
+              <Input
+                name="archivo"
+                type="file"
+                accept=".md,text/markdown,text/plain"
+                required
+                className="h-11"
+              />
+              <p className="text-sm text-muted-foreground">
+                Solo archivos Markdown (.md), hasta 10 MB.
+              </p>
+              <Button type="submit" variant="outline">
+                Subir política Markdown
+              </Button>
             </form>
           ) : null}
         </section>
         <section className="rounded-[12px] border bg-card p-4">
           <h2 className="font-medium">Reglas</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Aprobación real: {entidad.calibraciones[0] && entidad.calibraciones[0].muestras >= 30
+            Aprobación real:{" "}
+            {entidad.calibraciones[0] && entidad.calibraciones[0].muestras >= 30
               ? `${Math.round(entidad.calibraciones[0].aprobacionReal * 100)} %`
               : "sin muestras suficientes"}
           </p>
           <ul className="mt-3 flex flex-col gap-2 text-sm">
             {entidad.reglas.map((regla) => (
-              <li key={regla.id}>{regla.campo} {regla.operador} {JSON.stringify(regla.valor)} · {regla.estado}</li>
+              <li key={regla.id}>
+                {regla.campo} {regla.operador} {JSON.stringify(regla.valor)} ·{" "}
+                {regla.estado}
+              </li>
             ))}
           </ul>
           {puede(usuario.rol, "editar_reglas") ? (
             <form action={crearRegla} className="mt-4 grid gap-2">
               <input type="hidden" name="entidadId" value={entidad.id} />
-              <Input name="campo" placeholder="ingresoMensual" required className="h-11" />
+              <Input
+                name="campo"
+                placeholder="ingresoMensual"
+                required
+                className="h-11"
+              />
               <select name="operador" className="h-11 rounded-[12px] border px-3">
                 <option value=">=">&gt;=</option>
                 <option value="<=">&lt;=</option>
@@ -100,8 +154,18 @@ export default async function DetalleEntidad({
                 <option value="in">in</option>
                 <option value="between">between</option>
               </select>
-              <Input name="valor" placeholder="2000000 o [&quot;FIJO&quot;]" required className="h-11" />
-              <Input name="mensaje" placeholder="Mensaje para el analista" required className="h-11" />
+              <Input
+                name="valor"
+                placeholder='2000000 o ["FIJO"]'
+                required
+                className="h-11"
+              />
+              <Input
+                name="mensaje"
+                placeholder="Mensaje para el analista"
+                required
+                className="h-11"
+              />
               <select name="tipoCredito" className="h-11 rounded-[12px] border px-3">
                 <option value="">Cualquier crédito</option>
                 <option value="LIBRANZA">Libranza</option>
@@ -116,15 +180,22 @@ export default async function DetalleEntidad({
             <form action={guardarEntidad} className="mt-4 grid gap-2">
               <input type="hidden" name="id" value={entidad.id} />
               <Input name="nombre" defaultValue={entidad.nombre} className="h-11" />
-              <select name="tipo" defaultValue={entidad.tipo} className="h-11 rounded-[12px] border px-3">
+              <select
+                name="tipo"
+                defaultValue={entidad.tipo}
+                className="h-11 rounded-[12px] border px-3"
+              >
                 <option value="BANCO">Banco</option>
                 <option value="FINANCIERA">Financiera</option>
                 <option value="COOPERATIVA">Cooperativa</option>
               </select>
               <label className="flex min-h-11 items-center gap-2 text-sm">
-                <input type="checkbox" name="activa" defaultChecked={entidad.activa} /> Activa
+                <input type="checkbox" name="activa" defaultChecked={entidad.activa} />{" "}
+                Activa
               </label>
-              <Button type="submit" variant="outline">Guardar entidad</Button>
+              <Button type="submit" variant="outline">
+                Guardar entidad
+              </Button>
             </form>
           ) : null}
         </section>

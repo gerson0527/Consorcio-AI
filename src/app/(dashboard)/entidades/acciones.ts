@@ -8,8 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { exigirAccion } from "@/lib/sesion";
 import { ipSolicitud } from "@/lib/solicitud";
 import { registrarAuditoria } from "@/modules/auditoria";
-import { guardarPolitica, textoPlanoDePdf } from "@/modules/conocimiento";
-import { claveAleatoria, validarArchivo } from "@/modules/ingesta";
+import { guardarPolitica, leerPoliticaMarkdown } from "@/modules/conocimiento";
+import { claveAleatoria } from "@/modules/ingesta";
 import { esquemaRegla } from "@/modules/reglas";
 
 export async function guardarEntidad(formData: FormData) {
@@ -31,7 +31,11 @@ export async function guardarEntidad(formData: FormData) {
   const entidad = datos.data.id
     ? await prisma.entidad.update({
         where: { id: datos.data.id },
-        data: { nombre: datos.data.nombre, tipo: datos.data.tipo, activa: datos.data.activa === "true" },
+        data: {
+          nombre: datos.data.nombre,
+          tipo: datos.data.tipo,
+          activa: datos.data.activa === "true",
+        },
       })
     : await prisma.entidad.create({
         data: { nombre: `${datos.data.nombre} (ejemplo)`, tipo: datos.data.tipo },
@@ -53,15 +57,13 @@ export async function subirPolitica(formData: FormData) {
   const archivo = formData.get("archivo");
   if (!(archivo instanceof File)) redirect(`/entidades/${entidadId}?error=archivo`);
   const bytes = Buffer.from(await archivo.arrayBuffer());
-  const validacion = validarArchivo(bytes, archivo.type || "text/plain");
-  if (!validacion.ok) redirect(`/entidades/${entidadId}?error=archivo`);
-  const texto = archivo.type === "application/pdf" ? textoPlanoDePdf(bytes) : bytes.toString("utf8");
-  if (texto.trim().length < 20) redirect(`/entidades/${entidadId}?error=texto`);
+  const markdown = leerPoliticaMarkdown(archivo.name, bytes);
+  if (!markdown.ok) redirect(`/entidades/${entidadId}?error=${markdown.error}`);
   const clave = claveAleatoria(`politicas/${entidadId}`);
-  await guardarArchivo(clave, bytes, archivo.type || "text/plain");
+  await guardarArchivo(clave, bytes, "text/markdown; charset=utf-8");
   const politica = await guardarPolitica({
     entidadId,
-    texto,
+    texto: markdown.texto,
     archivoKey: clave,
     subidaPorId: usuario.id,
   });
