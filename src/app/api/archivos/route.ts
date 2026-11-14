@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { firmaValida, leerArchivo } from "@/lib/almacen";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { usuarioActual } from "@/lib/sesion";
 
 export async function GET(request: Request) {
-  const sesion = await auth();
-  if (!sesion?.user?.id)
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const usuario = await usuarioActual();
+  if (!usuario) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const url = new URL(request.url);
   const clave = url.searchParams.get("clave") ?? "";
   const expira = url.searchParams.get("expira") ?? "";
@@ -18,9 +17,7 @@ export async function GET(request: Request) {
   const documento = await prisma.documento.findFirst({
     where: {
       archivoKey: clave,
-      ...(sesion.user.rol === "ANALISTA"
-        ? { caso: { is: { analistaId: sesion.user.id } } }
-        : {}),
+      ...(usuario.rol === "ANALISTA" ? { caso: { is: { analistaId: usuario.id } } } : {}),
     },
     select: { id: true },
   });

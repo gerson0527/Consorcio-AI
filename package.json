@@ -15,7 +15,8 @@
     "worker": "tsx src/jobs/worker.ts",
     "seed": "tsx prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy"
+    "db:deploy": "prisma migrate deploy",
+    "db:proteger-datos": "tsx prisma/proteger-datos.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,css,md,json,yml,yaml}": "prettier --write",

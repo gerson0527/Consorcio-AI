@@ -5,10 +5,9 @@ import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { cifrarCampo, hashDocumento } from "@/lib/crypto";
+import { cifrarDocumento, hashDocumentoProtegido } from "@/lib/campos";
 import { filtroCasoPropio, filtroClienteAccesible } from "@/lib/acceso-clientes";
-import { analizarEntorno } from "@/lib/env-schema";
-import { guardarArchivo } from "@/lib/almacen";
+import { eliminarArchivo, guardarArchivo } from "@/lib/almacen";
 import { limitar } from "@/lib/limite";
 import { prisma } from "@/lib/prisma";
 import { exigirAccion } from "@/lib/sesion";
@@ -27,10 +26,6 @@ const esquemaCliente = z.object({
   tipoCredito: z.enum(["LIBRANZA", "VEHICULO", "VIVIENDA", "CONSUMO"]),
 });
 
-function claveCampo() {
-  return Buffer.from(analizarEntorno(process.env).FIELD_ENCRYPTION_KEY, "base64");
-}
-
 export async function crearCliente(formData: FormData) {
   const usuario = await exigirAccion("editar_clientes");
   const datos = esquemaCliente.safeParse({
@@ -40,7 +35,7 @@ export async function crearCliente(formData: FormData) {
     tipoCredito: formData.get("tipoCredito"),
   });
   if (!datos.success) redirect("/clientes/nuevo?error=datos");
-  const hash = hashDocumento(datos.data.documento);
+  const hash = hashDocumentoProtegido(datos.data.documento);
   const existente = await prisma.cliente.findUnique({ where: { documentoHash: hash } });
   if (existente && !existente.suprimidoEn) {
     const accesible = await prisma.cliente.findFirst({
@@ -54,7 +49,7 @@ export async function crearCliente(formData: FormData) {
     data: {
       nombre: datos.data.nombre,
       documentoHash: hash,
-      documentoCifrado: cifrarCampo(datos.data.documento, claveCampo()),
+      documentoCifrado: cifrarDocumento(datos.data.documento),
       consentimientos: {
         create: {
           finalidad: "Preanálisis crediticio ante entidades financieras",
@@ -213,19 +208,26 @@ export async function suprimirCliente(formData: FormData) {
     include: { casos: { include: { documentos: true } } },
   });
   if (!cliente) redirect("/clientes");
-  await prisma.caso.updateMany({
-    where: { clienteId: id },
-    data: { perfil: Prisma.JsonNull },
-  });
-  await prisma.documento.deleteMany({ where: { caso: { clienteId: id } } });
-  await prisma.cliente.update({
-    where: { id },
-    data: {
-      nombre: "Persona suprimida",
-      documentoHash: `suprimido-${randomUUID()}`,
-      documentoCifrado: cifrarCampo("suprimido", claveCampo()),
-      suprimidoEn: new Date(),
-    },
+  for (const caso of cliente.casos) {
+    for (const documento of caso.documentos) {
+      await eliminarArchivo(documento.archivoKey);
+    }
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.caso.updateMany({
+      where: { clienteId: id },
+      data: { perfil: Prisma.JsonNull },
+    });
+    await tx.documento.deleteMany({ where: { caso: { clienteId: id } } });
+    await tx.cliente.update({
+      where: { id },
+      data: {
+        nombre: "Persona suprimida",
+        documentoHash: `suprimido-${randomUUID()}`,
+        documentoCifrado: cifrarDocumento("suprimido"),
+        suprimidoEn: new Date(),
+      },
+    });
   });
   await registrarAuditoria({
     userId: usuario.id,

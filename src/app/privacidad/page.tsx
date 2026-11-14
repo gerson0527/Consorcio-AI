@@ -30,8 +30,8 @@ const secciones = [
     titulo: "3. Datos que trata",
     parrafos: [
       "De la cuenta de acceso: nombre, correo, contraseña almacenada con scrypt (no se guarda en claro) y rol.",
-      "Del cliente: nombre y número de documento. El número se guarda cifrado con AES-256-GCM y, por separado, un hash SHA-256 que solo sirve para saber si ese documento ya existe. En pantalla se muestran los últimos cuatro dígitos.",
-      "Del caso: tipo de crédito (libranza, consumo, vehículo o vivienda), archivos que sube quien gestiona (cédula, desprendibles, certificado laboral, extracto u otro), el perfil leído de esos archivos (ingreso, contrato, antigüedad, endeudamiento, edad y los campos que haya que revisar), el ranking de entidades, la explicación, la política citada y el resultado real que registra la persona (aprobado o rechazado, con motivo).",
+      "Del cliente: nombre y número de documento. El número se guarda cifrado con AES-256-GCM y, por separado, un HMAC con clave derivada para detectar si ese documento ya existe. En pantalla se muestran los últimos cuatro dígitos.",
+      "Del caso: tipo de crédito (libranza, consumo, vehículo o vivienda), archivos que sube quien gestiona (cédula, desprendibles, certificado laboral, extracto u otro), el perfil leído de esos archivos (ingreso, contrato, antigüedad, endeudamiento, edad y los campos que haya que revisar), el ranking de entidades, la explicación, la política citada y el resultado real que registra la persona (aprobado o rechazado, con motivo). El perfil y la extracción se cifran en la base de datos.",
       "De la autorización: la fecha y la finalidad «Preanálisis crediticio ante entidades financieras». La marca la persona que crea el cliente, confirmando que el cliente autorizó esa comparación. El sistema no archiva una firma escaneada en ese paso.",
       "De auditoría: usuario, acción, tipo de objeto, identificador, dirección IP y fecha. Sirve para saber quién hizo cada cambio.",
     ],
@@ -77,7 +77,7 @@ const secciones = [
     id: "seguridad",
     titulo: "8. Seguridad",
     parrafos: [
-      "El número de documento va cifrado. La contraseña no es reversible. El ingreso usa una sesión y cada rol solo abre lo que le corresponde. Los archivos se entregan con un enlace firmado. Las acciones quedan en auditoría.",
+      "El número de documento, el perfil extraído y los datos estructurados de los documentos se cifran con AES-256-GCM. La contraseña no es reversible. El ingreso valida que la cuenta siga activa y cada rol solo abre lo que le corresponde. Los archivos se entregan con un enlace firmado. Las acciones quedan en auditoría.",
       "Nadie puede prometer que un sistema es imposible de vulnerar. El operador debe proteger la clave de cifrado, el secreto de sesión y el acceso al servidor.",
     ],
   },
@@ -87,7 +87,6 @@ const secciones = [
     parrafos: [
       "El sistema no borra los casos por calendario. Se conservan mientras hagan falta para el preanálisis, la calibración y la auditoría.",
       "El administrador puede suprimir los datos personales de un cliente. Al hacerlo, el nombre pasa a «Persona suprimida», el documento se reemplaza, el perfil extraído se borra y se eliminan los registros de los archivos. El historial de la evaluación puede quedar ligado a ese cliente ya sustituido, para no perder la auditoría ni la calibración.",
-      "Esa supresión quita el registro del archivo en la base. No borra por sí sola la copia que esté en el disco o en el almacén de objetos. El operador debe retirar esa copia.",
       "La auditoría de la supresión se conserva, con el identificador del caso y la cantidad de documentos, sin el número de documento.",
     ],
   },

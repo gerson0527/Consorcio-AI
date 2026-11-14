@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  cifrarJson,
   cifrarCampo,
+  descifrarJson,
   descifrarCampo,
   enmascararDocumento,
   enmascararTextoParaIa,
@@ -27,7 +29,21 @@ describe("cifrado de campos", () => {
   });
 
   it("busca por el mismo hash aunque el documento traiga puntos", () => {
-    expect(hashDocumento("1.020.304")).toBe(hashDocumento("1020304"));
+    expect(hashDocumento("1.020.304", clave)).toBe(hashDocumento("1020304", clave));
+  });
+
+  it("usa una clave para proteger el hash del documento", () => {
+    expect(hashDocumento("1020304", clave)).not.toBe(
+      hashDocumento("1020304", Buffer.alloc(32, 8)),
+    );
+  });
+
+  it("cifra perfiles JSON y sigue leyendo los registros existentes durante la migración", () => {
+    const perfil = { ingresoMensual: 2500000 };
+    const cifrado = cifrarJson(perfil, clave);
+
+    expect(descifrarJson(cifrado, clave)).toEqual(perfil);
+    expect(descifrarJson(perfil, clave)).toEqual(perfil);
   });
 
   it("enmascara el documento y los números largos", () => {

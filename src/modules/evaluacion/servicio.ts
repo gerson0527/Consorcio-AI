@@ -1,23 +1,37 @@
 import { Prisma } from "@prisma/client";
 
+import { leerDatos } from "@/lib/campos";
 import { claveConfigurada, pedirJson } from "@/lib/claude";
 import { analizarEntorno } from "@/lib/env-schema";
 import { prisma } from "@/lib/prisma";
 import { registrarAuditoria } from "@/modules/auditoria";
 import { calibrar } from "@/modules/aprendizaje/calibrar";
-import { buscarEnMemoria, embeddingLocal, UMBRAL_EVIDENCIA, vectorSql } from "@/modules/conocimiento";
+import {
+  buscarEnMemoria,
+  embeddingLocal,
+  UMBRAL_EVIDENCIA,
+  vectorSql,
+} from "@/modules/conocimiento";
 import {
   analizarConFragmentos,
   esquemaAnalisis,
   validarCitas,
   type Analisis,
 } from "@/modules/evaluacion/analizar";
-import { PROMPT_EVALUACION, VERSION_PROMPT } from "@/modules/evaluacion/prompts/evaluacion";
+import {
+  PROMPT_EVALUACION,
+  VERSION_PROMPT,
+} from "@/modules/evaluacion/prompts/evaluacion";
 import { ordenarRanking } from "@/modules/evaluacion/ranking";
 import { esquemaPerfil, type Perfil } from "@/modules/ingesta/perfil";
 import { evaluarReglas, type Operador } from "@/modules/reglas";
 
-type Fragmento = { id: string; seccion: string | null; pagina: number | null; texto: string };
+type Fragmento = {
+  id: string;
+  seccion: string | null;
+  pagina: number | null;
+  texto: string;
+};
 
 export async function evaluarCaso(casoId: string, userId: string, ip?: string | null) {
   const caso = await prisma.caso.findUnique({
@@ -31,8 +45,10 @@ export async function evaluarCaso(casoId: string, userId: string, ip?: string | 
   if (caso.cliente.consentimientos.length === 0) {
     throw new Error("Sin consentimiento no se evalúa el caso");
   }
-  const perfil = esquemaPerfil.parse(caso.perfil ?? {});
-  const faltantesDocumento = documentosFaltantes(caso.documentos.map((documento) => documento.tipo));
+  const perfil = esquemaPerfil.parse(leerDatos<Perfil>(caso.perfil) ?? {});
+  const faltantesDocumento = documentosFaltantes(
+    caso.documentos.map((documento) => documento.tipo),
+  );
   const entidades = await prisma.entidad.findMany({
     where: { activa: true },
     include: {
@@ -59,8 +75,16 @@ export async function evaluarCaso(casoId: string, userId: string, ip?: string | 
         mensaje: regla.mensaje,
       })),
     );
-    const fragmentos = await buscarPolitica(entidad.id, preguntaDe(perfil, caso.tipoCredito));
-    const analisis = await analizar(entidad.id, fragmentos, motor.reglasDetalle, faltantesDocumento);
+    const fragmentos = await buscarPolitica(
+      entidad.id,
+      preguntaDe(perfil, caso.tipoCredito),
+    );
+    const analisis = await analizar(
+      entidad.id,
+      fragmentos,
+      motor.reglasDetalle,
+      faltantesDocumento,
+    );
     const muestras = entidad.calibraciones[0]?.muestras ?? 0;
     const minimo = analizarEntorno(process.env).CALIBRACION_MIN_MUESTRAS;
     const probabilidadBase = entidad.calibraciones[0]?.aprobacionReal ?? null;
@@ -127,7 +151,12 @@ async function analizar(
   detalles: Array<{ resultado: string; campo: string; mensaje: string }>,
   faltantesDocumento: string[],
 ): Promise<Analisis> {
-  const local = analizarConFragmentos({ entidadId, fragmentos, detalles, faltantesDocumento });
+  const local = analizarConFragmentos({
+    entidadId,
+    fragmentos,
+    detalles,
+    faltantesDocumento,
+  });
   if (!claveConfigurada() || fragmentos.length === 0) return local;
   let error = "";
   for (let intento = 0; intento < 2; intento += 1) {
@@ -137,7 +166,10 @@ async function analizar(
         contenido: `${error}\nFragmentos: ${JSON.stringify(fragmentos)}\nReglas: ${JSON.stringify(detalles)}\nFaltantes: ${faltantesDocumento.join(", ")}`,
         esquema: esquemaAnalisis,
       });
-      if (respuesta.datos.veredicto === "INSUFICIENTE" || validarCitas(respuesta.datos.citas, fragmentos)) {
+      if (
+        respuesta.datos.veredicto === "INSUFICIENTE" ||
+        validarCitas(respuesta.datos.citas, fragmentos)
+      ) {
         return respuesta.datos;
       }
       error = "Las citas deben usar fragmentoId entregados.";
@@ -148,7 +180,8 @@ async function analizar(
   return {
     ...local,
     veredicto: "INSUFICIENTE",
-    explicacion: "La respuesta del modelo no citó fragmentos válidos. Queda para revisión humana.",
+    explicacion:
+      "La respuesta del modelo no citó fragmentos válidos. Queda para revisión humana.",
     citas: [],
   };
 }
@@ -189,7 +222,9 @@ function preguntaDe(perfil: Perfil, tipoCredito: string) {
 }
 
 function documentosFaltantes(tipos: string[]) {
-  return ["cedula", "desprendible", "certificado_laboral"].filter((tipo) => !tipos.includes(tipo));
+  return ["cedula", "desprendible", "certificado_laboral"].filter(
+    (tipo) => !tipos.includes(tipo),
+  );
 }
 
 export { calibrar };

@@ -1,7 +1,12 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { analizarEntorno } from "@/lib/env-schema";
@@ -58,6 +63,16 @@ export async function leerArchivo(clave: string) {
   const bytes = await respuesta.Body?.transformToByteArray();
   if (!bytes) throw new Error("Archivo vacío");
   return Buffer.from(bytes);
+}
+
+export async function eliminarArchivo(clave: string) {
+  if (local()) {
+    await rm(ruta(clave), { force: true });
+    return;
+  }
+  await clienteS3().send(
+    new DeleteObjectCommand({ Bucket: entorno().S3_BUCKET, Key: clave }),
+  );
 }
 
 export async function urlFirmada(clave: string, segundos = 300) {

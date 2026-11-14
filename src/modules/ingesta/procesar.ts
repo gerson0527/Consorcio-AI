@@ -1,7 +1,6 @@
 import type { ContentBlockParam } from "@anthropic-ai/sdk/resources/messages/messages";
-import { Prisma } from "@prisma/client";
-
 import { claveConfigurada, pedirJson } from "@/lib/claude";
+import { cifrarDatos, leerDatos } from "@/lib/campos";
 import { leerArchivo } from "@/lib/almacen";
 import { prisma } from "@/lib/prisma";
 import { registrarAuditoria } from "@/modules/auditoria";
@@ -30,7 +29,10 @@ export async function procesarDocumento(documentoId: string) {
   }
   if (documento.estado === "PROCESADO") return;
 
-  await prisma.documento.update({ where: { id: documento.id }, data: { estado: "PROCESANDO" } });
+  await prisma.documento.update({
+    where: { id: documento.id },
+    data: { estado: "PROCESANDO" },
+  });
   const bytes = await leerArchivo(documento.archivoKey);
   const tipo = documento.tipo as keyof typeof esquemasPorTipo;
   let extraccion: Extraccion | null = null;
@@ -64,7 +66,8 @@ export async function procesarDocumento(documentoId: string) {
         modelo = "extractor-sintetico";
       }
     } catch (error) {
-      errorValidacion = error instanceof Error ? error.message : "La salida no cumple el esquema.";
+      errorValidacion =
+        error instanceof Error ? error.message : "La salida no cumple el esquema.";
       extraccion = null;
     }
   }
@@ -72,7 +75,10 @@ export async function procesarDocumento(documentoId: string) {
   if (!extraccion) {
     await prisma.documento.update({
       where: { id: documento.id },
-      data: { estado: "REVISAR", observaciones: errorValidacion || "No se pudo leer el documento." },
+      data: {
+        estado: "REVISAR",
+        observaciones: errorValidacion || "No se pudo leer el documento.",
+      },
     });
     return;
   }
@@ -82,7 +88,7 @@ export async function procesarDocumento(documentoId: string) {
     where: { id: documento.id },
     data: {
       estado: revisar ? "REVISAR" : "PROCESADO",
-      datosExtraidos: extraccion as Prisma.InputJsonValue,
+      datosExtraidos: cifrarDatos(extraccion),
       confianza: confianzaMedia(extraccion),
       observaciones: extraccion.observaciones.join(" ") || null,
     },
@@ -102,19 +108,23 @@ async function consolidarCaso(casoId: string) {
     documentos.map((documento) => ({
       tipo: documento.tipo,
       estado: documento.estado,
-      datos: documento.datosExtraidos as Extraccion | null,
+      datos: leerDatos<Extraccion>(documento.datosExtraidos),
     })),
   );
   const contradiccion = perfil.revisar.includes("empleador");
   if (contradiccion) {
     await prisma.documento.updateMany({
-      where: { casoId, tipo: { in: ["desprendible", "certificado_laboral"] }, estado: "PROCESADO" },
+      where: {
+        casoId,
+        tipo: { in: ["desprendible", "certificado_laboral"] },
+        estado: "PROCESADO",
+      },
       data: { estado: "REVISAR", observaciones: "Hay contradicción entre documentos." },
     });
   }
   await prisma.caso.update({
     where: { id: casoId },
-    data: { perfil: perfil as Prisma.InputJsonValue },
+    data: { perfil: cifrarDatos(perfil) },
   });
 }
 
@@ -127,10 +137,16 @@ function mediaClaude(bytes: Buffer): ContentBlockParam {
     };
   }
   if (bytes[0] === 0xff && bytes[1] === 0xd8) {
-    return { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } };
+    return {
+      type: "image",
+      source: { type: "base64", media_type: "image/jpeg", data: base64 },
+    };
   }
   if (bytes[0] === 0x89) {
-    return { type: "image", source: { type: "base64", media_type: "image/png", data: base64 } };
+    return {
+      type: "image",
+      source: { type: "base64", media_type: "image/png", data: base64 },
+    };
   }
   return { type: "text", text: textoEnmascarado(bytes.toString("utf8")) };
 }

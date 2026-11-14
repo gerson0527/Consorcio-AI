@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { puede } from "@/lib/autorizacion";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { usuarioActual } from "@/lib/sesion";
 import { aCsv, resumirReporte, type FilaReporte } from "@/modules/reportes";
 
 export async function GET(request: Request) {
-  const sesion = await auth();
-  if (!sesion?.user || !puede(sesion.user.rol, "ver_reportes")) {
+  const usuario = await usuarioActual();
+  if (!usuario) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+  if (!puede(usuario.rol, "ver_reportes")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
   const url = new URL(request.url);
@@ -16,9 +19,7 @@ export async function GET(request: Request) {
   const evaluaciones = await prisma.evaluacion.findMany({
     where: {
       creadaEn: { gte: desde, lte: hasta },
-      ...(sesion.user.rol === "ANALISTA"
-        ? { caso: { is: { analistaId: sesion.user.id } } }
-        : {}),
+      ...(usuario.rol === "ANALISTA" ? { caso: { is: { analistaId: usuario.id } } } : {}),
     },
     include: { entidad: true, resultado: true, caso: true },
   });

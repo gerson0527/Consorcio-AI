@@ -9,7 +9,9 @@ export type FilaCsv = {
 export type ErrorCsv = { linea: number; mensaje: string };
 
 export function parsearCsvResultados(texto: string) {
-  const filas = dividirCsv(texto).filter((fila) => fila.some((celda) => celda.trim() !== ""));
+  const filas = dividirCsv(texto).filter((fila) =>
+    fila.some((celda) => celda.trim() !== ""),
+  );
   const errores: ErrorCsv[] = [];
   const validas: FilaCsv[] = [];
   if (filas.length === 0) {
@@ -18,7 +20,10 @@ export function parsearCsvResultados(texto: string) {
   const encabezado = filas[0]!.map((celda) => celda.trim());
   const esperadas = ["documentoHash", "entidad", "estado", "motivo"];
   if (esperadas.some((columna, indice) => encabezado[indice] !== columna)) {
-    errores.push({ linea: 1, mensaje: "El encabezado debe ser documentoHash,entidad,estado,motivo." });
+    errores.push({
+      linea: 1,
+      mensaje: "El encabezado debe ser documentoHash,entidad,estado,motivo.",
+    });
     return { validas, errores };
   }
   filas.slice(1).forEach((fila, indice) => {
@@ -64,6 +69,13 @@ function dividirCsv(texto: string) {
 
 export function aCsv(filas: string[][]) {
   return filas
-    .map((fila) => fila.map((celda) => `"${celda.replaceAll('"', '""')}"`).join(","))
+    .map((fila) =>
+      fila
+        .map((celda) => {
+          const segura = /^[\s]*[=+\-@]/u.test(celda) ? `'${celda}` : celda;
+          return `"${segura.replaceAll('"', '""')}"`;
+        })
+        .join(","),
+    )
     .join("\n");
 }

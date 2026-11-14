@@ -15,6 +15,8 @@ En local, si `S3_ENDPOINT` apunta a localhost, los archivos se guardan en `.data
 
 `REDIS_URL` puede omitirse temporalmente para que la aplicación web arranque sin las colas. En ese caso no se pueden cargar documentos ni ejecutar extracción; configura Redis y vuelve a desplegar para reactivar ese flujo.
 
+Después de desplegar código que cifre perfiles/extracciones o cambie el hash del documento, ejecuta `pnpm db:proteger-datos` una sola vez contra la base correcta. El script es idempotente y convierte registros existentes en lotes; no lo ejecutes con una clave `FIELD_ENCRYPTION_KEY` distinta de la usada por esa instalación.
+
 ## Variables
 
 Están en `.env.example`. Los modelos vigentes al 2026-11-12 son `claude-haiku-5-5` para extracción y `claude-sonnet-5-5` para el análisis. El SDK actual no expone temperatura; las llamadas usan `effort: low` y un JSON schema.
@@ -25,7 +27,7 @@ Están en `.env.example`. Los modelos vigentes al 2026-11-12 son `claude-haiku-5
 
 - Postgres: `pg_dump` diario de la base `consorcio`, más una prueba de restauración.
 - Archivos: copia del bucket (o de `.data/archivos` en local). El cifrado SSE del bucket de MinIO no quedó activo en el compose local; en producción el bucket debe cifrar en reposo.
-- La clave `FIELD_ENCRYPTION_KEY` se guarda fuera del repositorio. Rotarla exige reescribir los campos cifrados con la clave nueva y conservar la anterior hasta terminar.
+- La clave `FIELD_ENCRYPTION_KEY` se guarda fuera del repositorio. Se usa para cifrar campos y derivar el HMAC del documento. Rotarla exige reescribir los campos cifrados y los hashes con la clave nueva, y conservar la anterior hasta terminar.
 
 ## Migraciones y reversa
 

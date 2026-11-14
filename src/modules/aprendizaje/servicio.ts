@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { leerDatos } from "@/lib/campos";
 import { registrarAuditoria } from "@/modules/auditoria";
 import { calibrar } from "@/modules/aprendizaje/calibrar";
 import { sugerirUmbral } from "@/modules/aprendizaje/patrones";
@@ -15,7 +16,11 @@ export async function recalibrarEntidad(entidadId: string) {
     evaluaciones.map((evaluacion) => ({
       predicha:
         evaluacion.probabilidad ??
-        (evaluacion.veredicto === "FAVORABLE" ? 0.7 : evaluacion.veredicto === "CONDICIONADO" ? 0.45 : 0.2),
+        (evaluacion.veredicto === "FAVORABLE"
+          ? 0.7
+          : evaluacion.veredicto === "CONDICIONADO"
+            ? 0.45
+            : 0.2),
       aprobado: evaluacion.resultado?.estado === "APROBADO",
     })),
     entorno.CALIBRACION_MIN_MUESTRAS,
@@ -45,12 +50,14 @@ export async function detectarPatrones() {
       const patron = sugerirUmbral(
         campo,
         evaluaciones.map((evaluacion) => {
-          const perfil = (evaluacion.caso.perfil ?? {}) as Partial<Perfil>;
+          const perfil = leerDatos<Partial<Perfil>>(evaluacion.caso.perfil) ?? {};
           return {
             id: evaluacion.casoId,
             valor: typeof perfil[campo] === "number" ? perfil[campo] : null,
             rechazado: evaluacion.resultado?.estado === "RECHAZADO",
-            fecha: evaluacion.resultado?.registradoEn.toISOString() ?? evaluacion.creadaEn.toISOString(),
+            fecha:
+              evaluacion.resultado?.registradoEn.toISOString() ??
+              evaluacion.creadaEn.toISOString(),
           };
         }),
         entorno.REGLA_SUGERIDA_MIN_SOPORTE,

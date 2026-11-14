@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parsearCsvResultados } from "@/modules/reportes/csv";
+import { aCsv, parsearCsvResultados } from "@/modules/reportes/csv";
 import { resumirReporte } from "@/modules/reportes/resumen";
 
 describe("reportes", () => {
@@ -26,14 +26,25 @@ describe("reportes", () => {
       },
     ]);
     expect(resumen.casos).toBe(2);
-    expect(resumen.tasaPorEntidad[0]).toMatchObject({ evaluaciones: 2, tasaAprobacion: 0.5 });
+    expect(resumen.tasaPorEntidad[0]).toMatchObject({
+      evaluaciones: 2,
+      tasaAprobacion: 0.5,
+    });
     expect(resumen.coincidencia).toBe(1);
     expect(resumen.motivos).toEqual([{ motivo: "Ingreso", cantidad: 1 }]);
   });
 
   it("rechaza filas inválidas y conserva el número de línea", () => {
-    const resultado = parsearCsvResultados("documentoHash,entidad,estado,motivo\nabc,Banco,QUIZAS,motivo\n");
+    const resultado = parsearCsvResultados(
+      "documentoHash,entidad,estado,motivo\nabc,Banco,QUIZAS,motivo\n",
+    );
     expect(resultado.validas).toHaveLength(0);
     expect(resultado.errores[0]).toMatchObject({ linea: 2 });
+  });
+
+  it("neutraliza celdas que podrían ejecutarse como fórmulas en una hoja de cálculo", () => {
+    expect(aCsv([["=1+1", " texto", "+SUMA(A1:A2)", "-1", "@cmd"]])).toBe(
+      `"'=1+1"," texto","'+SUMA(A1:A2)","'-1","'@cmd"`,
+    );
   });
 });

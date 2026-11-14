@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { urlFirmada } from "@/lib/almacen";
 import { filtroClienteAccesible } from "@/lib/acceso-clientes";
 import { puede } from "@/lib/autorizacion";
-import { documentoEnmascarado } from "@/lib/campos";
+import { documentoEnmascarado, leerDatos } from "@/lib/campos";
 import { formatoCop } from "@/lib/formato";
 import { redisDisponible } from "@/jobs/cola";
 import { SelectorArchivo } from "@/components/selector-archivo";
@@ -77,7 +77,7 @@ export default async function CasoCliente({
   });
   if (!cliente || cliente.suprimidoEn) notFound();
   const caso = cliente.casos[0];
-  const perfil = (caso?.perfil ?? null) as Perfil | null;
+  const perfil = leerDatos<Perfil>(caso?.perfil);
   const soloLectura = !puede(usuario.rol, "editar_clientes");
   const cerrado = Boolean(
     caso?.evaluaciones.some(

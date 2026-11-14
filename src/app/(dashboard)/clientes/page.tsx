@@ -12,12 +12,13 @@ import {
   creditoLegible,
   textoDocumentos,
 } from "@/components/presentacion";
-import { documentoEnmascarado } from "@/lib/campos";
+import { documentoEnmascarado, leerDatos } from "@/lib/campos";
 import { estadoCaso } from "@/lib/estado-caso";
 import { puede } from "@/lib/autorizacion";
 import { filtroCasoPropio } from "@/lib/acceso-clientes";
 import { prisma } from "@/lib/prisma";
 import { sesionActual } from "@/lib/sesion";
+import type { Perfil } from "@/modules/ingesta/perfil";
 
 export const metadata: Metadata = metadatosPrivados(
   "Clientes del preanálisis crediticio",
@@ -81,7 +82,7 @@ export default async function Clientes({
   const filas = clientes
     .map((cliente) => {
       const caso = cliente.casos[0];
-      const perfil = (caso?.perfil ?? {}) as { revisar?: string[] };
+      const perfil = leerDatos<Partial<Perfil>>(caso?.perfil) ?? {};
       const estado = estadoCaso({
         documentos: caso?.documentos.map((documento) => documento.estado) ?? [],
         revisar: (perfil.revisar?.length ?? 0) > 0,
