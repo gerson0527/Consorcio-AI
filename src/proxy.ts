@@ -47,7 +47,11 @@ export async function proxy(request: NextRequest) {
     return continuar(request, csp, nonce);
   }
 
-  const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: request.nextUrl.protocol === "https:",
+  });
   if (!token) {
     const destino = request.nextUrl.clone();
     destino.pathname = "/login";
