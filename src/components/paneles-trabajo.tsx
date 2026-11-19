@@ -276,9 +276,11 @@ export function Marco({
   const [scope, animate] = useAnimate<HTMLDivElement>();
   const reducedMotion = useReducedMotion();
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || !scope.current) return;
+    const elementos = scope.current.querySelectorAll<HTMLElement>("[data-motion-item]");
+    if (elementos.length === 0) return;
     const controls = animate(
-      "[data-motion-item]",
+      elementos,
       { opacity: [0, 1], y: [12, 0] },
       {
         duration: 0.45,
@@ -287,7 +289,7 @@ export function Marco({
       },
     );
     return () => controls.stop();
-  }, [animate, reducedMotion, ruta]);
+  }, [animate, reducedMotion, ruta, scope]);
 
   const titulo = ruta.startsWith("/entidades")
     ? "Entidades"
