@@ -34,7 +34,11 @@ export default async function Auditoria({
       ) : (
         <ul className="flex flex-col gap-3">
           {registros.map((registro) => (
-            <li key={registro.id} className="rounded-[12px] border bg-card p-4 text-sm">
+            <li
+              key={registro.id}
+              data-motion-item
+              className="rounded-[12px] border bg-card p-4 text-sm"
+            >
               <p className="font-medium">
                 {registro.accion} · {registro.objetoTipo}
               </p>

@@ -166,7 +166,11 @@ export default async function CasoCliente({
         <p className="text-sm text-success">Acción registrada.</p>
       ) : null}
       {soloLectura || cerrado ? null : (
-        <form action={editarCliente} className="rounded-xl border bg-card p-4">
+        <form
+          action={editarCliente}
+          data-motion-item
+          className="rounded-xl border bg-card p-4"
+        >
           <input type="hidden" name="id" value={cliente.id} />
           <h2 className="font-semibold">Datos del caso</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -203,7 +207,7 @@ export default async function CasoCliente({
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <section className="flex flex-col gap-4">
-          <article className="rounded-xl border bg-card p-4">
+          <article data-motion-item className="rounded-xl border bg-card p-4">
             <h2 className="font-semibold">Perfil extraído</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Datos leídos de los documentos del cliente
@@ -254,13 +258,14 @@ export default async function CasoCliente({
             )}
           </article>
 
-          <article className="rounded-xl border bg-card p-4">
+          <article data-motion-item className="rounded-xl border bg-card p-4">
             <h2 className="font-semibold">Documentos</h2>
             {documentos.length ? (
               <ul className="mt-2">
                 {documentos.map((documento) => (
                   <li
                     key={documento.id}
+                    data-motion-item
                     className="flex items-center justify-between gap-3 border-b py-3 text-sm last:border-0"
                   >
                     <a
@@ -314,7 +319,10 @@ export default async function CasoCliente({
           </article>
         </section>
 
-        <section className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+        <section
+          data-motion-item
+          className="flex flex-col gap-4 rounded-xl border bg-card p-4"
+        >
           <div>
             <h2 className="font-semibold">Mejores opciones</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -340,6 +348,7 @@ export default async function CasoCliente({
               return (
                 <article
                   key={evaluacion.id}
+                  data-motion-item
                   id={indice === 0 ? "resultado" : undefined}
                   className={
                     favorable

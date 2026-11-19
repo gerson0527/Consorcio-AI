@@ -31,6 +31,7 @@ export default async function NuevoCliente({
       </div>
       <form
         action={crearCliente}
+        data-motion-item
         className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-soft"
       >
         <div className="flex flex-col gap-2">

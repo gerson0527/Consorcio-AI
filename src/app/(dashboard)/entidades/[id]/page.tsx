@@ -128,14 +128,14 @@ export default async function DetalleEntidad({
         </p>
       ) : null}
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-[12px] border bg-card p-4">
+        <section data-motion-item className="rounded-[12px] border bg-card p-4">
           <h2 className="font-medium">Versiones</h2>
           {entidad.politicas.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">No hay políticas.</p>
           ) : (
             <ul className="mt-3 flex flex-col gap-2 text-sm">
               {entidad.politicas.map((politica) => (
-                <li key={politica.id}>
+                <li key={politica.id} data-motion-item>
                   <Link
                     href={`/entidades/${entidad.id}?version=${politica.version}`}
                     className="text-primary"
@@ -179,7 +179,7 @@ export default async function DetalleEntidad({
             </form>
           ) : null}
         </section>
-        <aside className="rounded-[12px] border bg-card p-4">
+        <aside data-motion-item className="rounded-[12px] border bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-medium">Reglas activas y sugeridas</h2>
             <Link href="/reglas" className="text-sm font-medium text-primary underline">
@@ -229,7 +229,11 @@ export default async function DetalleEntidad({
                       ? regla.valor.join(", ")
                       : String(regla.valor);
                     return (
-                      <li key={regla.id} className="rounded-xl border p-3">
+                      <li
+                        key={regla.id}
+                        data-motion-item
+                        className="rounded-xl border p-3"
+                      >
                         <Pastilla>Activa</Pastilla>
                         <p className="mt-2 rounded-lg bg-muted px-2 py-1.5 font-mono text-sm">
                           {regla.campo} {regla.operador} {valor}
@@ -266,7 +270,11 @@ export default async function DetalleEntidad({
                       ? regla.valor.join(", ")
                       : String(regla.valor);
                     return (
-                      <li key={regla.id} className="rounded-xl border p-3">
+                      <li
+                        key={regla.id}
+                        data-motion-item
+                        className="rounded-xl border p-3"
+                      >
                         <div className="flex items-center justify-between gap-2">
                           <Pastilla>Pendiente</Pastilla>
                           {seccion ? (

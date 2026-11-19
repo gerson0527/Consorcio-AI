@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  stagger,
+  useAnimate,
+  useReducedMotion,
+} from "motion/react";
 import {
   BarChart3,
   Building2,
@@ -78,11 +84,22 @@ export function BarraIzquierda({
           aria-expanded={!colapsada}
           className="hidden size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:inline-flex"
         >
-          {colapsada ? (
-            <PanelLeftOpen className="size-4" aria-hidden="true" />
-          ) : (
-            <PanelLeftClose className="size-4" aria-hidden="true" />
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={colapsada ? "expandir" : "contraer"}
+              className="flex"
+              initial={{ opacity: 0, rotate: -45, scale: 0.8 }}
+              animate={{ opacity: 1, rotate: 0, scale: 1 }}
+              exit={{ opacity: 0, rotate: 45, scale: 0.8 }}
+              transition={{ duration: 0.16 }}
+            >
+              {colapsada ? (
+                <PanelLeftOpen className="size-4" aria-hidden="true" />
+              ) : (
+                <PanelLeftClose className="size-4" aria-hidden="true" />
+              )}
+            </motion.span>
+          </AnimatePresence>
         </button>
       </div>
 
@@ -129,21 +146,43 @@ export function BarraIzquierda({
                       aria-current={activo ? "page" : undefined}
                       aria-label={enlace.etiqueta}
                       title={colapsada ? enlace.etiqueta : undefined}
-                      className={`group flex min-h-10 shrink-0 items-center gap-3 rounded-xl px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-10 md:text-[13px] ${
+                      className={`group relative isolate flex min-h-10 shrink-0 items-center gap-3 rounded-xl px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-10 md:text-[13px] ${
                         colapsada ? "md:justify-center md:px-0" : ""
                       } ${
                         activo
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-soft"
+                          ? "text-sidebar-accent-foreground"
                           : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
                       }`}
                     >
-                      <Icono className="size-4 shrink-0" aria-hidden="true" />
-                      <span className={colapsada ? "md:hidden" : ""}>
+                      {activo ? (
+                        <motion.span
+                          layoutId="sidebar-active-link"
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-0 z-0 rounded-xl bg-sidebar-accent shadow-soft"
+                          transition={{
+                            type: "spring",
+                            stiffness: 420,
+                            damping: 34,
+                          }}
+                        />
+                      ) : null}
+                      <motion.span
+                        className="relative z-10 flex shrink-0"
+                        animate={{ scale: activo ? 1.06 : 1 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 420,
+                          damping: 24,
+                        }}
+                      >
+                        <Icono className="size-4" aria-hidden="true" />
+                      </motion.span>
+                      <span className={`relative z-10 ${colapsada ? "md:hidden" : ""}`}>
                         {enlace.etiqueta}
                       </span>
                       {enlace.href === "/reglas" && pendientes > 0 ? (
                         <span
-                          className={`ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground ${
+                          className={`relative z-10 ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground ${
                             colapsada ? "md:hidden" : ""
                           }`}
                         >
@@ -151,7 +190,14 @@ export function BarraIzquierda({
                         </span>
                       ) : null}
                       {activo && !colapsada ? (
-                        <ChevronRight className="ml-auto size-3.5" aria-hidden="true" />
+                        <motion.span
+                          className="relative z-10 ml-auto flex"
+                          initial={{ opacity: 0, x: -4 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.18 }}
+                        >
+                          <ChevronRight className="size-3.5" aria-hidden="true" />
+                        </motion.span>
                       ) : null}
                     </Link>
                   );
@@ -227,6 +273,22 @@ export function Marco({
   puedeVerReglas: boolean;
 }) {
   const ruta = usePathname();
+  const [scope, animate] = useAnimate<HTMLDivElement>();
+  const reducedMotion = useReducedMotion();
+  useEffect(() => {
+    if (reducedMotion) return;
+    const controls = animate(
+      "[data-motion-item]",
+      { opacity: [0, 1], y: [12, 0] },
+      {
+        duration: 0.45,
+        delay: stagger(0.045),
+        ease: [0.22, 1, 0.36, 1],
+      },
+    );
+    return () => controls.stop();
+  }, [animate, reducedMotion, ruta]);
+
   const titulo = ruta.startsWith("/entidades")
     ? "Entidades"
     : ruta.startsWith("/reglas")
@@ -295,6 +357,7 @@ export function Marco({
         <AnimatePresence mode="wait">
           <motion.div
             key={ruta}
+            ref={scope}
             className="min-h-full"
             data-motion-entry=""
             initial={{ opacity: 0, y: 12 }}

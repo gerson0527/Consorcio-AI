@@ -200,6 +200,7 @@ export default async function Login({
                   {accesosDesarrollo.map((acceso) => (
                     <li
                       key={acceso.email}
+                      data-motion-item
                       className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-2.5"
                     >
                       <span className="min-w-0">

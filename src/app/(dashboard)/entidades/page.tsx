@@ -44,6 +44,7 @@ export default async function Entidades() {
             </summary>
             <form
               action={guardarEntidad}
+              data-motion-item
               className="absolute right-0 z-10 mt-2 grid w-80 gap-3 rounded-2xl border bg-card p-4 shadow-lg"
             >
               <Input
@@ -78,6 +79,7 @@ export default async function Entidades() {
             return (
               <article
                 key={entidad.id}
+                data-motion-item
                 className="rounded-xl border bg-card p-3 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
@@ -128,6 +130,7 @@ export default async function Entidades() {
       {puede(usuario.rol, "subir_politica") && entidades.length > 0 ? (
         <form
           action={subirPolitica}
+          data-motion-item
           className="flex flex-col gap-4 rounded-2xl border border-dashed bg-card p-5 md:flex-row md:items-center"
         >
           <div className="min-w-0 flex-1">

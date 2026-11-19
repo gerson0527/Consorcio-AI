@@ -75,6 +75,7 @@ export default async function ReglasSugeridas() {
               return (
                 <article
                   key={regla.id}
+                  data-motion-item
                   className="rounded-2xl border bg-card p-5 shadow-sm"
                 >
                   <div className="flex items-center gap-2">
@@ -132,7 +133,7 @@ export default async function ReglasSugeridas() {
             })
           )}
         </section>
-        <aside className="rounded-2xl border bg-card p-5 shadow-sm">
+        <aside data-motion-item className="rounded-2xl border bg-card p-5 shadow-sm">
           <h2 className="font-semibold">Calibración por entidad</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Aprobación predicha frente a la real
@@ -146,7 +147,7 @@ export default async function ReglasSugeridas() {
                 : 0;
               const real = suficiente ? Math.round(ultima!.aprobacionReal * 100) : 0;
               return (
-                <li key={entidad.id}>
+                <li key={entidad.id} data-motion-item>
                   <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
                     <span className="font-medium">{entidad.nombre}</span>
                     <span className="text-muted-foreground">

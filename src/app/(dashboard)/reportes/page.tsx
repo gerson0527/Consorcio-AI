@@ -110,7 +110,10 @@ export default async function Reportes({
             Revisa el comportamiento de los preanálisis y los resultados de las entidades.
           </p>
         </div>
-        <form className="flex items-center gap-2 rounded-xl border border-border bg-card p-1.5 shadow-soft">
+        <form
+          data-motion-item
+          className="flex items-center gap-2 rounded-xl border border-border bg-card p-1.5 shadow-soft"
+        >
           <label className="sr-only" htmlFor="periodo">
             Periodo
           </label>
@@ -158,7 +161,10 @@ export default async function Reportes({
         />
       </div>
       <div className="grid items-start gap-4 xl:grid-cols-2">
-        <section className="min-w-0 rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6 xl:col-span-2">
+        <section
+          data-motion-item
+          className="min-w-0 rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6 xl:col-span-2"
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold">Evaluaciones</h2>
@@ -264,7 +270,10 @@ export default async function Reportes({
             </p>
           ) : null}
         </section>
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6">
+        <section
+          data-motion-item
+          className="rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6"
+        >
           <h2 className="text-base font-semibold">Aprobación por entidad</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Porcentaje de casos aprobados sobre los enviados
@@ -278,6 +287,7 @@ export default async function Reportes({
               {resumen.tasaPorEntidad.map((entidad) => (
                 <li
                   key={entidad.entidad}
+                  data-motion-item
                   className="grid grid-cols-[140px_1fr_48px] items-center gap-3 text-sm"
                 >
                   <span>{entidad.entidad}</span>
@@ -290,7 +300,10 @@ export default async function Reportes({
             </ul>
           )}
         </section>
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6">
+        <section
+          data-motion-item
+          className="rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6"
+        >
           <h2 className="text-base font-semibold">Motivos de rechazo más comunes</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Registrados por los analistas
@@ -304,6 +317,7 @@ export default async function Reportes({
               {resumen.motivos.map((motivo) => (
                 <li
                   key={motivo.motivo}
+                  data-motion-item
                   className="flex items-center justify-between gap-3 border-b py-3 text-sm last:border-0"
                 >
                   <span>{motivo.motivo}</span>
@@ -327,6 +341,7 @@ export default async function Reportes({
       {puede(usuario.rol, "importar_historico") ? (
         <form
           action={previsualizarCsv}
+          data-motion-item
           className="rounded-2xl border border-dashed bg-card p-5"
         >
           <h2 className="font-semibold">Carga de histórico</h2>
@@ -352,7 +367,10 @@ export default async function Reportes({
 
 function Tarjeta({ titulo, valor }: { titulo: string; valor: string }) {
   return (
-    <article className="rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow hover:shadow-card">
+    <article
+      data-motion-item
+      className="rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow hover:shadow-card"
+    >
       <p className="text-xs font-medium text-muted-foreground">{titulo}</p>
       <p className="mt-2 text-3xl font-medium tracking-tight">{valor}</p>
     </article>

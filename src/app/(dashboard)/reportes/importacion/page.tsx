@@ -39,7 +39,7 @@ export default async function Importacion() {
       {resultado.errores.length === 0 ? null : (
         <ul className="rounded-[12px] border bg-warning-muted p-4 text-sm">
           {resultado.errores.map((error) => (
-            <li key={`${error.linea}-${error.mensaje}`}>
+            <li key={`${error.linea}-${error.mensaje}`} data-motion-item>
               Línea {error.linea}: {error.mensaje}
             </li>
           ))}
@@ -48,7 +48,7 @@ export default async function Importacion() {
       {resultado.validas.length === 0 ? (
         <p>No hay filas para confirmar.</p>
       ) : (
-        <form action={confirmarCsv}>
+        <form action={confirmarCsv} data-motion-item>
           <Button type="submit">Confirmar importación</Button>
         </form>
       )}

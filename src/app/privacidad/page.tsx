@@ -185,7 +185,12 @@ export default function Privacidad() {
             </nav>
             <div className="mt-10 flex flex-col gap-9">
               {secciones.map((seccion) => (
-                <section key={seccion.id} id={seccion.id} className="scroll-mt-20">
+                <section
+                  key={seccion.id}
+                  id={seccion.id}
+                  data-motion-item
+                  className="scroll-mt-20"
+                >
                   <h2 className="text-lg font-semibold tracking-tight">
                     {seccion.titulo}
                   </h2>

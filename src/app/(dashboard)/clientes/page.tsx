@@ -113,7 +113,7 @@ export default async function Clientes({
       {filtros.aviso === "suprimido" ? (
         <p className="text-sm text-success">Los datos del cliente se suprimieron.</p>
       ) : null}
-      <form className="flex flex-col gap-3 lg:flex-row lg:items-end">
+      <form data-motion-item className="flex flex-col gap-3 lg:flex-row lg:items-end">
         <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm text-muted-foreground">
           Buscar cliente
           <Input
@@ -171,7 +171,11 @@ export default async function Clientes({
               </tr>
             ) : (
               filas.map((fila) => (
-                <tr key={fila.cliente.id} className="border-b last:border-0">
+                <tr
+                  key={fila.cliente.id}
+                  data-motion-item
+                  className="border-b last:border-0"
+                >
                   <td className="px-5 py-4">
                     <Link
                       href={`/clientes/${fila.cliente.id}`}
