@@ -4,6 +4,7 @@ import Link from "next/link";
 import { metadatosPrivados } from "@/lib/metadatos";
 
 import { guardarEntidad, subirPolitica } from "@/app/(dashboard)/entidades/acciones";
+import { BotonSubirPolitica } from "@/components/boton-subir-politica";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MarcaEjemplo, Pastilla, entidadLegible } from "@/components/presentacion";
@@ -156,7 +157,7 @@ export default async function Entidades() {
             className="h-11 max-w-xs bg-card"
             aria-label="Archivo Markdown de la política"
           />
-          <Button type="submit">Subir política Markdown</Button>
+          <BotonSubirPolitica />
         </form>
       ) : null}
     </main>

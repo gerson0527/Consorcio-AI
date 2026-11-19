@@ -10,6 +10,7 @@ import { ipSolicitud } from "@/lib/solicitud";
 import { registrarAuditoria } from "@/modules/auditoria";
 import { guardarPolitica, leerPoliticaMarkdown } from "@/modules/conocimiento";
 import { claveAleatoria } from "@/modules/ingesta";
+import { generarReglasDesdePolitica } from "@/modules/reglas/generar-politica";
 import { esquemaRegla } from "@/modules/reglas";
 
 export async function guardarEntidad(formData: FormData) {
@@ -75,7 +76,66 @@ export async function subirPolitica(formData: FormData) {
     objetoId: politica.id,
     detalle: { version: politica.version, fragmentos: politica.fragmentos.length },
   });
-  redirect(`/entidades/${entidadId}?aviso=politica`);
+  const resultado = await generarYAuditarReglas(usuario.id, politica, markdown.texto);
+  redirect(
+    `/entidades/${entidadId}?aviso=politica&reglas=${resultado.estado}&cantidad=${resultado.ids.length}`,
+  );
+}
+
+export async function crearReglasDesdePolitica(formData: FormData) {
+  const usuario = await exigirAccion("subir_politica");
+  const politicaId = z.string().min(1).max(64).safeParse(formData.get("politicaId"));
+  if (!politicaId.success) redirect("/entidades?error=politica");
+  const politica = await prisma.politica.findUnique({
+    where: { id: politicaId.data },
+    include: { fragmentos: { orderBy: { orden: "asc" } } },
+  });
+  if (!politica) redirect("/entidades?error=politica");
+  if (politica.fragmentos.length === 0) {
+    redirect(`/entidades/${politica.entidadId}?error=fragmentos`);
+  }
+  const markdown = politica.fragmentos
+    .map(
+      (fragmento) =>
+        `${fragmento.seccion ? `## ${fragmento.seccion}\n` : ""}${fragmento.texto}`,
+    )
+    .join("\n\n");
+  const resultado = await generarYAuditarReglas(usuario.id, politica, markdown);
+  redirect(
+    `/entidades/${politica.entidadId}?version=${politica.version}&aviso=politica&reglas=${resultado.estado}&cantidad=${resultado.ids.length}`,
+  );
+}
+
+export async function retirarReglasActivas(formData: FormData) {
+  const usuario = await exigirAccion("editar_reglas");
+  const entidadId = z.string().min(1).max(64).parse(formData.get("entidadId"));
+  const reglas = await prisma.$transaction(async (tx) => {
+    const activas = await tx.regla.findMany({
+      where: { entidadId, estado: "ACTIVA" },
+      select: { id: true },
+    });
+    if (activas.length === 0) return [];
+    await tx.regla.updateMany({
+      where: { id: { in: activas.map((regla) => regla.id) }, estado: "ACTIVA" },
+      data: {
+        estado: "RECHAZADA",
+        decididaPorId: usuario.id,
+        decididaEn: new Date(),
+      },
+    });
+    return activas.map((regla) => regla.id);
+  });
+  if (reglas.length > 0) {
+    await registrarAuditoria({
+      userId: usuario.id,
+      ip: await ipSolicitud(),
+      accion: "retirar_reglas_activas",
+      objetoTipo: "Entidad",
+      objetoId: entidadId,
+      detalle: { reglas, cantidad: reglas.length, estado: "RECHAZADA" },
+    });
+  }
+  redirect(`/entidades/${entidadId}?aviso=reglas_retiradas&cantidad=${reglas.length}`);
 }
 
 export async function crearRegla(formData: FormData) {
@@ -120,4 +180,28 @@ export async function crearRegla(formData: FormData) {
     detalle: { campo: regla.campo, operador: regla.operador },
   });
   redirect(`/entidades/${entidadId}?aviso=regla`);
+}
+
+async function generarYAuditarReglas(
+  userId: string,
+  politica: { id: string; entidadId: string; version: number },
+  markdown: string,
+) {
+  const resultado = await generarReglasDesdePolitica({
+    entidadId: politica.entidadId,
+    politicaId: politica.id,
+    version: politica.version,
+    markdown,
+  });
+  if (resultado.ids.length > 0) {
+    await registrarAuditoria({
+      userId,
+      ip: await ipSolicitud(),
+      accion: "sugerir_reglas_politica",
+      objetoTipo: "Regla",
+      objetoId: politica.id,
+      detalle: { reglas: resultado.ids, estado: "PENDIENTE" },
+    });
+  }
+  return resultado;
 }
