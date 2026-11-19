@@ -15,7 +15,8 @@ export const metadata: Metadata = metadatosPrivados(
   "Mide casos evaluados, tasa de aprobación, aciertos de la recomendación y los motivos de rechazo del periodo.",
 );
 
-const campo = "h-11 rounded-xl border bg-card px-3 text-sm";
+const campo =
+  "h-10 rounded-xl border border-border bg-background px-3 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring";
 
 export default async function Reportes({
   searchParams,
@@ -72,24 +73,58 @@ export default async function Reportes({
     resumen.tiempoPromedioMs === null
       ? null
       : Math.max(1, Math.round(resumen.tiempoPromedioMs / 60000));
+  const inicioMs = desde.getTime();
+  const duracionMs = Math.max(1, hasta.getTime() - inicioMs);
+  const valoresGrafica = Array.from({ length: 30 }, () => 0);
+  for (const fila of filas) {
+    const diferencia = fila.creadoEn.getTime() - inicioMs;
+    if (diferencia < 0 || diferencia > duracionMs) continue;
+    const indice = Math.min(29, Math.floor((diferencia / duracionMs) * 30));
+    valoresGrafica[indice] += 1;
+  }
+  const maxGrafica = Math.max(4, ...valoresGrafica);
+  const puntos = valoresGrafica.map((valor, indice) => ({
+    x: 54 + (indice / (valoresGrafica.length - 1)) * 752,
+    y: 190 - (valor / maxGrafica) * 156,
+  }));
+  const linea = puntos
+    .map((punto, indice) => `${indice === 0 ? "M" : "L"} ${punto.x} ${punto.y}`)
+    .join(" ");
+  const area = `${linea} L ${puntos[puntos.length - 1].x} 190 L ${puntos[0].x} 190 Z`;
+  const marcasFecha = [0, 7, 14, 21, 29].map((indice) =>
+    new Date(inicioMs + duracionMs * (indice / 29)).toLocaleDateString("es-CO", {
+      day: "2-digit",
+      month: "short",
+    }),
+  );
 
   return (
-    <main id="contenido" className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-[28px] font-semibold tracking-tight">Reportes</h1>
-          {ejemplos > 0 ? <MarcaEjemplo /> : null}
+    <main id="contenido" className="mx-auto flex w-full max-w-[1500px] flex-col gap-7">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-medium tracking-tight">Reportes</h1>
+            {ejemplos > 0 ? <MarcaEjemplo /> : null}
+          </div>
+          <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
+            Revisa el comportamiento de los preanálisis y los resultados de las entidades.
+          </p>
         </div>
-        <form className="flex items-center gap-2">
-          <label className="text-sm text-muted-foreground" htmlFor="periodo">
+        <form className="flex items-center gap-2 rounded-xl border border-border bg-card p-1.5 shadow-soft">
+          <label className="sr-only" htmlFor="periodo">
             Periodo
           </label>
-          <select id="periodo" name="periodo" defaultValue={periodo} className={campo}>
+          <select
+            id="periodo"
+            name="periodo"
+            defaultValue={periodo}
+            className={`${campo} border-transparent bg-transparent`}
+          >
             <option value="30">Últimos 30 días</option>
             <option value="90">Últimos 90 días</option>
             <option value="365">Último año</option>
           </select>
-          <Button type="submit" variant="outline" className="bg-card">
+          <Button type="submit" className="h-10 rounded-lg px-4">
             Ver
           </Button>
         </form>
@@ -122,9 +157,115 @@ export default async function Reportes({
           }
         />
       </div>
-      <div className="grid items-start gap-4 xl:grid-cols-[1.4fr_0.8fr]">
-        <section className="rounded-2xl border bg-card p-5 shadow-sm">
-          <h2 className="font-semibold">Aprobación por entidad</h2>
+      <div className="grid items-start gap-4 xl:grid-cols-2">
+        <section className="min-w-0 rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6 xl:col-span-2">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">Evaluaciones</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Volumen de casos durante el periodo seleccionado
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+              <span className="size-2 rounded-full bg-primary" aria-hidden="true" />
+              Casos evaluados
+            </span>
+          </div>
+          <div className="mt-5 overflow-hidden">
+            <svg
+              role="img"
+              aria-label={`Evaluaciones por periodo: ${resumen.casos} casos`}
+              viewBox="0 0 840 240"
+              preserveAspectRatio="none"
+              className="h-56 w-full overflow-visible"
+            >
+              <defs>
+                <linearGradient id="evaluaciones-area" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-2)" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="var(--chart-2)" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              {[34, 86, 138, 190].map((y) => (
+                <line
+                  key={y}
+                  x1="54"
+                  x2="806"
+                  y1={y}
+                  y2={y}
+                  stroke="var(--border)"
+                  strokeDasharray="3 5"
+                />
+              ))}
+              <text
+                x="42"
+                y="38"
+                textAnchor="end"
+                fill="var(--muted-foreground)"
+                fontSize="10"
+              >
+                {maxGrafica}
+              </text>
+              <text
+                x="42"
+                y="142"
+                textAnchor="end"
+                fill="var(--muted-foreground)"
+                fontSize="10"
+              >
+                {Math.round(maxGrafica / 2)}
+              </text>
+              <text
+                x="42"
+                y="194"
+                textAnchor="end"
+                fill="var(--muted-foreground)"
+                fontSize="10"
+              >
+                0
+              </text>
+              <path d={area} fill="url(#evaluaciones-area)" />
+              <path
+                d={linea}
+                fill="none"
+                stroke="var(--chart-1)"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                vectorEffect="non-scaling-stroke"
+              />
+              {puntos.map((punto, indice) =>
+                valoresGrafica[indice] > 0 ? (
+                  <circle
+                    key={indice}
+                    cx={punto.x}
+                    cy={punto.y}
+                    r="2.5"
+                    fill="var(--chart-1)"
+                  />
+                ) : null,
+              )}
+              {marcasFecha.map((marca, indice) => (
+                <text
+                  key={`${marca}-${indice}`}
+                  x={54 + (indice / (marcasFecha.length - 1)) * 752}
+                  y="220"
+                  textAnchor={indice === 0 ? "start" : indice === 4 ? "end" : "middle"}
+                  fill="var(--muted-foreground)"
+                  fontSize="10"
+                >
+                  {marca}
+                </text>
+              ))}
+            </svg>
+          </div>
+          {resumen.casos === 0 ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              No hay evaluaciones registradas en este periodo.
+            </p>
+          ) : null}
+        </section>
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6">
+          <h2 className="text-base font-semibold">Aprobación por entidad</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Porcentaje de casos aprobados sobre los enviados
           </p>
@@ -149,8 +290,8 @@ export default async function Reportes({
             </ul>
           )}
         </section>
-        <section className="rounded-2xl border bg-card p-5 shadow-sm">
-          <h2 className="font-semibold">Motivos de rechazo más comunes</h2>
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-soft md:p-6">
+          <h2 className="text-base font-semibold">Motivos de rechazo más comunes</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Registrados por los analistas
           </p>
@@ -211,9 +352,9 @@ export default async function Reportes({
 
 function Tarjeta({ titulo, valor }: { titulo: string; valor: string }) {
   return (
-    <article className="rounded-2xl border bg-card p-5 shadow-sm">
-      <p className="text-sm text-muted-foreground">{titulo}</p>
-      <p className="mt-2 text-3xl font-semibold tracking-tight">{valor}</p>
+    <article className="rounded-2xl border border-border bg-card p-5 shadow-soft transition-shadow hover:shadow-card">
+      <p className="text-xs font-medium text-muted-foreground">{titulo}</p>
+      <p className="mt-2 text-3xl font-medium tracking-tight">{valor}</p>
     </article>
   );
 }

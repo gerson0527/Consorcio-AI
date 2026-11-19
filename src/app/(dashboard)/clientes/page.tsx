@@ -98,7 +98,7 @@ export default async function Clientes({
     <main id="contenido" className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-[28px] font-semibold tracking-tight">Clientes</h1>
+          <h1 className="text-3xl font-medium tracking-tight">Clientes</h1>
           {ejemplos > 0 ? <MarcaEjemplo /> : null}
         </div>
         {puede(usuario.rol, "editar_clientes") ? (

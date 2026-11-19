@@ -86,7 +86,7 @@ export default async function DetalleEntidad({
       <Link href="/entidades" className="text-sm text-muted-foreground">
         Volver a entidades
       </Link>
-      <h1 className="text-2xl font-semibold">{entidad.nombre}</h1>
+      <h1 className="text-3xl font-medium tracking-tight">{entidad.nombre}</h1>
       {consulta.error ? (
         <p className="text-sm text-destructive">
           {consulta.error === "formato"

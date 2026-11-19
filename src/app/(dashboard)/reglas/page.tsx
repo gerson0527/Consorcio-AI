@@ -34,7 +34,7 @@ export default async function ReglasSugeridas() {
     <main id="contenido" className="flex flex-col gap-6">
       <div>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[28px] font-semibold tracking-tight">
+          <h1 className="text-3xl font-medium tracking-tight">
             Reglas sugeridas por la IA
           </h1>
           {ejemplo ? <MarcaEjemplo /> : null}

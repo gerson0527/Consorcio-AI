@@ -23,7 +23,6 @@ const esquemaCliente = z.object({
   nombre: z.string().trim().min(3).max(120),
   documento: z.string().trim().min(5).max(20),
   finalidad: z.literal("on"),
-  tipoCredito: z.enum(["LIBRANZA", "VEHICULO", "VIVIENDA", "CONSUMO"]),
 });
 
 export async function crearCliente(formData: FormData) {
@@ -32,7 +31,6 @@ export async function crearCliente(formData: FormData) {
     nombre: formData.get("nombre"),
     documento: formData.get("documento"),
     finalidad: formData.get("finalidad"),
-    tipoCredito: formData.get("tipoCredito"),
   });
   if (!datos.success) redirect("/clientes/nuevo?error=datos");
   const hash = hashDocumentoProtegido(datos.data.documento);
@@ -57,7 +55,7 @@ export async function crearCliente(formData: FormData) {
         },
       },
       casos: {
-        create: { tipoCredito: datos.data.tipoCredito, analistaId: usuario.id },
+        create: { tipoCredito: "LIBRANZA", analistaId: usuario.id },
       },
     },
   });
@@ -67,7 +65,7 @@ export async function crearCliente(formData: FormData) {
     accion: "crear_cliente",
     objetoTipo: "Cliente",
     objetoId: cliente.id,
-    detalle: { tipoCredito: datos.data.tipoCredito },
+    detalle: { tipoCredito: "LIBRANZA" },
   });
   redirect(`/clientes/${cliente.id}`);
 }

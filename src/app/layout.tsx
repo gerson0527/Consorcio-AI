@@ -47,12 +47,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#000000",
+  themeColor: "#eef0f0",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${geist.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="es"
+      className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <a
           href="#contenido"
@@ -60,9 +63,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Saltar al contenido
         </a>
-        <div className="flex min-h-full flex-1 flex-col">
-          {children}
-        </div>
+        <div className="flex min-h-full flex-1 flex-col">{children}</div>
       </body>
     </html>
   );

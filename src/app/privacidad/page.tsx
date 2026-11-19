@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { buttonVariants } from "@/components/ui/button";
+
 export const metadata: Metadata = {
   title: { absolute: "Política de privacidad | Consorcio AI" },
   description:
@@ -126,65 +128,78 @@ const secciones = [
 export default function Privacidad() {
   return (
     <>
-      <header className="border-b">
-        <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
+      <header className="border-b border-border bg-card/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link
             href="/"
             className="inline-flex min-h-11 items-center gap-3 text-sm font-semibold"
           >
-            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-xs text-primary-foreground shadow-soft">
               CF
             </span>
-            Consorcio AI
+            <span>
+              <span className="block leading-4">Consorcio AI</span>
+              <span className="mt-1 block text-[10px] font-normal text-muted-foreground">
+                Preanálisis crediticio
+              </span>
+            </span>
           </Link>
           <Link
             href="/login"
-            className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             Ingresar
           </Link>
         </div>
       </header>
-      <main id="contenido" className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
-        <p className="font-mono text-xs text-muted-foreground">
-          Habeas data · Ley 1581 de 2012
-        </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-          Política de privacidad
-        </h1>
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">
-          Cómo Consorcio AI trata los datos de quien gestiona el crédito y de los clientes
-          que se cargan para encontrar la mejor opción.
-        </p>
-        <nav
-          aria-label="Contenido de la política"
-          className="mt-8 flex flex-col gap-1 border-y py-4"
-        >
-          {secciones.map((seccion) => (
-            <a
-              key={seccion.id}
-              href={`#${seccion.id}`}
-              className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-            >
-              {seccion.titulo}
-            </a>
-          ))}
-        </nav>
-        <div className="mt-10 flex flex-col gap-10">
-          {secciones.map((seccion) => (
-            <section key={seccion.id} id={seccion.id} className="scroll-mt-20">
-              <h2 className="text-xl font-semibold">{seccion.titulo}</h2>
-              {seccion.parrafos.map((parrafo) => (
-                <p key={parrafo} className="mt-3 text-sm leading-7 text-muted-foreground">
-                  {parrafo}
-                </p>
-              ))}
-            </section>
-          ))}
+      <main
+        id="contenido"
+        className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 md:py-12"
+      >
+        <div className="rounded-3xl border border-border bg-card p-5 shadow-soft md:p-9">
+          <p className="inline-flex rounded-full bg-mint px-3 py-1.5 text-xs font-medium text-mint-foreground">
+            Habeas data · Ley 1581 de 2012
+          </p>
+          <h1 className="mt-4 text-3xl font-medium tracking-tight sm:text-4xl">
+            Política de privacidad
+          </h1>
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
+            Cómo Consorcio AI trata los datos de quien gestiona el crédito y de los
+            clientes que se cargan para encontrar la mejor opción.
+          </p>
+          <nav
+            aria-label="Contenido de la política"
+            className="mt-8 grid gap-x-6 gap-y-1 rounded-2xl border border-border bg-background p-4 sm:grid-cols-2 md:p-5"
+          >
+            {secciones.map((seccion) => (
+              <a
+                key={seccion.id}
+                href={`#${seccion.id}`}
+                className="inline-flex min-h-10 items-center text-sm text-muted-foreground underline-offset-2 transition hover:text-foreground hover:underline"
+              >
+                {seccion.titulo}
+              </a>
+            ))}
+          </nav>
+          <div className="mt-10 flex flex-col gap-9">
+            {secciones.map((seccion) => (
+              <section key={seccion.id} id={seccion.id} className="scroll-mt-20">
+                <h2 className="text-lg font-semibold tracking-tight">{seccion.titulo}</h2>
+                {seccion.parrafos.map((parrafo) => (
+                  <p
+                    key={parrafo}
+                    className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground"
+                  >
+                    {parrafo}
+                  </p>
+                ))}
+              </section>
+            ))}
+          </div>
         </div>
       </main>
-      <footer className="border-">
-        <p className="mx-auto w-full max-w-3xl px-4 py-6 text-sm text-muted-foreground sm:px-6">
+      <footer className="border-t border-border bg-card/60">
+        <p className="mx-auto w-full max-w-5xl px-4 py-6 text-sm text-muted-foreground sm:px-6">
           Consorcio Finance. El resultado mostrado es una recomendación, no una decisión
           de crédito.
         </p>

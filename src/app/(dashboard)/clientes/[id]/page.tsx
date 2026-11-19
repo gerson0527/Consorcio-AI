@@ -110,7 +110,7 @@ export default async function CasoCliente({
             <span> / Caso</span>
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-2">
-            <h1 className="text-[28px] font-semibold tracking-tight">{cliente.nombre}</h1>
+            <h1 className="text-3xl font-medium tracking-tight">{cliente.nombre}</h1>
             {lista ? <Pastilla>Evaluación lista</Pastilla> : null}
             {ejemplo ? <MarcaEjemplo /> : null}
           </div>
