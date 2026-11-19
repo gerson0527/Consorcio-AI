@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
 import {
   BarChart3,
   Building2,
@@ -290,7 +291,21 @@ export function Marco({
           ) : null}
         </div>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-7">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-7">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={ruta}
+            className="min-h-full"
+            data-motion-entry=""
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

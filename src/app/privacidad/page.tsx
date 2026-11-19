@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { buttonVariants } from "@/components/ui/button";
+import { EntradaSuave } from "@/components/entrada-suave";
+import { buttonVariants } from "@/components/ui/button-variants";
 
 export const metadata: Metadata = {
   title: { absolute: "Política de privacidad | Consorcio AI" },
@@ -156,47 +157,51 @@ export default function Privacidad() {
         id="contenido"
         className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 md:py-12"
       >
-        <div className="rounded-3xl border border-border bg-card p-5 shadow-soft md:p-9">
-          <p className="inline-flex rounded-full bg-mint px-3 py-1.5 text-xs font-medium text-mint-foreground">
-            Habeas data · Ley 1581 de 2012
-          </p>
-          <h1 className="mt-4 text-3xl font-medium tracking-tight sm:text-4xl">
-            Política de privacidad
-          </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Cómo Consorcio AI trata los datos de quien gestiona el crédito y de los
-            clientes que se cargan para encontrar la mejor opción.
-          </p>
-          <nav
-            aria-label="Contenido de la política"
-            className="mt-8 grid gap-x-6 gap-y-1 rounded-2xl border border-border bg-background p-4 sm:grid-cols-2 md:p-5"
-          >
-            {secciones.map((seccion) => (
-              <a
-                key={seccion.id}
-                href={`#${seccion.id}`}
-                className="inline-flex min-h-10 items-center text-sm text-muted-foreground underline-offset-2 transition hover:text-foreground hover:underline"
-              >
-                {seccion.titulo}
-              </a>
-            ))}
-          </nav>
-          <div className="mt-10 flex flex-col gap-9">
-            {secciones.map((seccion) => (
-              <section key={seccion.id} id={seccion.id} className="scroll-mt-20">
-                <h2 className="text-lg font-semibold tracking-tight">{seccion.titulo}</h2>
-                {seccion.parrafos.map((parrafo) => (
-                  <p
-                    key={parrafo}
-                    className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground"
-                  >
-                    {parrafo}
-                  </p>
-                ))}
-              </section>
-            ))}
+        <EntradaSuave>
+          <div className="rounded-3xl border border-border bg-card p-5 shadow-soft md:p-9">
+            <p className="inline-flex rounded-full bg-mint px-3 py-1.5 text-xs font-medium text-mint-foreground">
+              Habeas data · Ley 1581 de 2012
+            </p>
+            <h1 className="mt-4 text-3xl font-medium tracking-tight sm:text-4xl">
+              Política de privacidad
+            </h1>
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
+              Cómo Consorcio AI trata los datos de quien gestiona el crédito y de los
+              clientes que se cargan para encontrar la mejor opción.
+            </p>
+            <nav
+              aria-label="Contenido de la política"
+              className="mt-8 grid gap-x-6 gap-y-1 rounded-2xl border border-border bg-background p-4 sm:grid-cols-2 md:p-5"
+            >
+              {secciones.map((seccion) => (
+                <a
+                  key={seccion.id}
+                  href={`#${seccion.id}`}
+                  className="inline-flex min-h-10 items-center text-sm text-muted-foreground underline-offset-2 transition hover:text-foreground hover:underline"
+                >
+                  {seccion.titulo}
+                </a>
+              ))}
+            </nav>
+            <div className="mt-10 flex flex-col gap-9">
+              {secciones.map((seccion) => (
+                <section key={seccion.id} id={seccion.id} className="scroll-mt-20">
+                  <h2 className="text-lg font-semibold tracking-tight">
+                    {seccion.titulo}
+                  </h2>
+                  {seccion.parrafos.map((parrafo) => (
+                    <p
+                      key={parrafo}
+                      className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground"
+                    >
+                      {parrafo}
+                    </p>
+                  ))}
+                </section>
+              ))}
+            </div>
           </div>
-        </div>
+        </EntradaSuave>
       </main>
       <footer className="border-t border-border bg-card/60">
         <p className="mx-auto w-full max-w-5xl px-4 py-6 text-sm text-muted-foreground sm:px-6">

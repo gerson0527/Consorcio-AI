@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ProveedorMotion } from "@/components/proveedor-motion";
 import "./globals.css";
 
 const geist = Geist({
@@ -63,7 +64,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Saltar al contenido
         </a>
-        <div className="flex min-h-full flex-1 flex-col">{children}</div>
+        <ProveedorMotion>
+          <div className="flex min-h-full flex-1 flex-col">{children}</div>
+        </ProveedorMotion>
       </body>
     </html>
   );

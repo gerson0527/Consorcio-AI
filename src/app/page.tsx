@@ -3,7 +3,8 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { ArrowRight, Check, FileSearch, ShieldCheck } from "lucide-react";
 
-import { buttonVariants } from "@/components/ui/button";
+import { EntradaSuave } from "@/components/entrada-suave";
+import { buttonVariants } from "@/components/ui/button-variants";
 
 const descripcion =
   "Consorcio AI ordena opciones de crédito para el analista. Compara el perfil con la política vigente y deja la decisión final en la persona.";
@@ -67,7 +68,7 @@ export default async function Inicio() {
             aria-hidden="true"
           />
           <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 md:py-20 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-24">
-            <div className="max-w-2xl">
+            <EntradaSuave className="max-w-2xl">
               <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-soft">
                 <span className="size-1.5 rounded-full bg-success" aria-hidden="true" />
                 PREANÁLISIS PARA EQUIPOS DE CRÉDITO
@@ -96,97 +97,99 @@ export default async function Inicio() {
                 <ShieldCheck className="size-4 text-success" aria-hidden="true" />
                 Recomendaciones con trazabilidad; sin decisiones automáticas de crédito.
               </p>
-            </div>
+            </EntradaSuave>
 
-            <figure
-              className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-card"
-              aria-label="Vista de ejemplo del caso, sin datos reales"
-            >
-              <div className="flex h-12 items-center justify-between gap-3 border-b border-border bg-sidebar px-4">
-                <figcaption className="flex items-center gap-2 text-xs font-medium">
-                  <span className="flex size-6 items-center justify-center rounded-lg bg-primary text-[9px] text-primary-foreground">
-                    CF
-                  </span>
-                  Espacio de trabajo
-                </figcaption>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-success-muted px-2.5 py-1 text-[10px] font-medium text-success">
-                  <Check className="size-3" aria-hidden="true" />
-                  Vista de ejemplo
-                </span>
-              </div>
-              <div className="grid gap-5 p-5 sm:p-7">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">CASO DE PREANÁLISIS</p>
-                    <p className="mt-1 text-lg font-medium tracking-tight">
-                      Cliente de ejemplo
-                    </p>
-                  </div>
-                  <span className="rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-medium text-muted-foreground">
-                    Sin evaluar
+            <EntradaSuave demora={0.12}>
+              <figure
+                className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-card"
+                aria-label="Vista de ejemplo del caso, sin datos reales"
+              >
+                <div className="flex h-12 items-center justify-between gap-3 border-b border-border bg-sidebar px-4">
+                  <figcaption className="flex items-center gap-2 text-xs font-medium">
+                    <span className="flex size-6 items-center justify-center rounded-lg bg-primary text-[9px] text-primary-foreground">
+                      CF
+                    </span>
+                    Espacio de trabajo
+                  </figcaption>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success-muted px-2.5 py-1 text-[10px] font-medium text-success">
+                    <Check className="size-3" aria-hidden="true" />
+                    Vista de ejemplo
                   </span>
                 </div>
-                <div className="grid gap-5 md:grid-cols-[0.9fr_1.1fr]">
-                  <dl className="grid grid-cols-2 gap-2">
-                    {vista.map((fila) => (
-                      <div
-                        key={fila.etiqueta}
-                        className="rounded-xl border border-border bg-background/70 p-3"
-                      >
-                        <dt className="text-[10px] text-muted-foreground">
-                          {fila.etiqueta}
-                        </dt>
-                        <dd className="mt-1 text-xs font-medium">{fila.valor}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <div className="flex min-h-44 flex-col justify-between rounded-2xl border border-border bg-background p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-medium">Comparación de opciones</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">
-                          Datos demostrativos
-                        </p>
-                      </div>
-                      <FileSearch
-                        className="size-4 text-mint-foreground"
-                        aria-hidden="true"
-                      />
+                <div className="grid gap-5 p-5 sm:p-7">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">CASO DE PREANÁLISIS</p>
+                      <p className="mt-1 text-lg font-medium tracking-tight">
+                        Cliente de ejemplo
+                      </p>
                     </div>
-                    <svg
-                      viewBox="0 0 360 110"
-                      className="mt-4 h-24 w-full"
-                      role="img"
-                      aria-label="Gráfico ilustrativo de comparación"
-                    >
-                      <path
-                        d="M4 88 C 34 85, 40 28, 76 48 S 130 82, 160 60 S 215 26, 242 45 S 298 69, 356 18 L 356 106 L 4 106 Z"
-                        fill="var(--mint)"
-                        opacity="0.55"
-                      />
-                      <path
-                        d="M4 88 C 34 85, 40 28, 76 48 S 130 82, 160 60 S 215 26, 242 45 S 298 69, 356 18"
-                        fill="none"
-                        stroke="var(--chart-1)"
-                        strokeLinecap="round"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M4 105 H356 M4 72 H356 M4 39 H356"
-                        fill="none"
-                        stroke="var(--border)"
-                        strokeDasharray="3 5"
-                      />
-                    </svg>
+                    <span className="rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-medium text-muted-foreground">
+                      Sin evaluar
+                    </span>
                   </div>
+                  <div className="grid gap-5 md:grid-cols-[0.9fr_1.1fr]">
+                    <dl className="grid grid-cols-2 gap-2">
+                      {vista.map((fila) => (
+                        <div
+                          key={fila.etiqueta}
+                          className="rounded-xl border border-border bg-background/70 p-3"
+                        >
+                          <dt className="text-[10px] text-muted-foreground">
+                            {fila.etiqueta}
+                          </dt>
+                          <dd className="mt-1 text-xs font-medium">{fila.valor}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <div className="flex min-h-44 flex-col justify-between rounded-2xl border border-border bg-background p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-medium">Comparación de opciones</p>
+                          <p className="mt-1 text-[10px] text-muted-foreground">
+                            Datos demostrativos
+                          </p>
+                        </div>
+                        <FileSearch
+                          className="size-4 text-mint-foreground"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <svg
+                        viewBox="0 0 360 110"
+                        className="mt-4 h-24 w-full"
+                        role="img"
+                        aria-label="Gráfico ilustrativo de comparación"
+                      >
+                        <path
+                          d="M4 88 C 34 85, 40 28, 76 48 S 130 82, 160 60 S 215 26, 242 45 S 298 69, 356 18 L 356 106 L 4 106 Z"
+                          fill="var(--mint)"
+                          opacity="0.55"
+                        />
+                        <path
+                          d="M4 88 C 34 85, 40 28, 76 48 S 130 82, 160 60 S 215 26, 242 45 S 298 69, 356 18"
+                          fill="none"
+                          stroke="var(--chart-1)"
+                          strokeLinecap="round"
+                          strokeWidth="2"
+                        />
+                        <path
+                          d="M4 105 H356 M4 72 H356 M4 39 H356"
+                          fill="none"
+                          stroke="var(--border)"
+                          strokeDasharray="3 5"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="flex items-start gap-2 rounded-xl bg-ia-muted px-3.5 py-3 text-xs leading-5 text-ia">
+                    <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                    Cada recomendación conserva la política consultada. La evaluación
+                    final corresponde al analista.
+                  </p>
                 </div>
-                <p className="flex items-start gap-2 rounded-xl bg-ia-muted px-3.5 py-3 text-xs leading-5 text-ia">
-                  <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  Cada recomendación conserva la política consultada. La evaluación final
-                  corresponde al analista.
-                </p>
-              </div>
-            </figure>
+              </figure>
+            </EntradaSuave>
           </div>
         </section>
       </main>
